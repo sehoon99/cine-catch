@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TheaterResponse {
-    private Long id;
+    private String id;
     private String brand;
     private String name;
     private String address;
@@ -25,8 +25,8 @@ public class TheaterResponse {
                 .brand(theater.getBrand())
                 .name(theater.getName())
                 .address(theater.getAddress())
-                .latitude(theater.getLocation().getY())
-                .longitude(theater.getLocation().getX())
+                .latitude(theater.getLocation() != null ? theater.getLocation().getY() : null)
+                .longitude(theater.getLocation() != null ? theater.getLocation().getX() : null)
                 .build();
     }
 }

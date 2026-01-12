@@ -23,12 +23,9 @@ public class EventLocation {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private EventStatus status; // Available, SoldOut, Scarce, Unknown
+    @Column(length = 50, nullable = false)
+    private String status;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    public enum EventStatus { Available, SoldOut, Scarce, Unknown }
 }

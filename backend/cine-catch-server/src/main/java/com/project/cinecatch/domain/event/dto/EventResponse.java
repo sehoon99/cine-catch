@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class EventResponse {
 
-    private Long eventId;
+    private String eventId;
     private String movieTitle;
     private String goodsTitle;
     private String imageUrl;
@@ -37,7 +37,7 @@ public class EventResponse {
         List<TheaterInventory> theaterList = locations.stream()
                 .map(loc -> TheaterInventory.builder()
                         .theaterName(loc.getTheater().getName())
-                        .status(loc.getStatus().name())
+                        .status(loc.getStatus())
                         .build())
                 .collect(Collectors.toList());
 
