@@ -12,7 +12,7 @@ import org.locationtech.jts.geom.Point;
 public class Theater {
 
     @Id
-    private Long id;
+    private String id;
 
     @Column(length = 20, nullable = false)
     private String brand; // CGV

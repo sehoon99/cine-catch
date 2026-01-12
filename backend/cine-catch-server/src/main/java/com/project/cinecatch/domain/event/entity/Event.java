@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class Event {
 
     @Id
-    private Long id;
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id", nullable = false)
