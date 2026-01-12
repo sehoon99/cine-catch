@@ -1,0 +1,13 @@
+package me.gyanni.cinecatch;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class CineCatchApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
