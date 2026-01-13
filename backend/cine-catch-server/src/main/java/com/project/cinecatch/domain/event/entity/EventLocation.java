@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @Table(name = "event_location")
 public class EventLocation {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Id
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "theater_id", nullable = false)

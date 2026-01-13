@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class TheaterSubscription {
 
     @Id
-    private Long id;
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

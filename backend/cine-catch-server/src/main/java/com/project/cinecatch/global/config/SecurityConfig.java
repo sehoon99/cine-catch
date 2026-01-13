@@ -20,7 +20,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/events/**").permitAll()
                         .requestMatchers("/api/theaters/**").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui.html").permitAll()
+                        .anyRequest().authenticated()
                 );
 
         return http.build();

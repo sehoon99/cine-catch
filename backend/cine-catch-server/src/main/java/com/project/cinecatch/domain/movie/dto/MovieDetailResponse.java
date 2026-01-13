@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MovieDetailResponse {
-    private Long id;
+    private String id;
     private String title;
     private String director;
     private String genre;

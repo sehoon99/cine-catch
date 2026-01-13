@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @Table(name = "movies")
 public class Movie {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Id
+    private String id;
 
     @Column(nullable = false)
     private String title;
