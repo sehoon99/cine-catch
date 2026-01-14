@@ -1,0 +1,74 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, entity ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    # PostgreSQL 서비스 컨테이너 (PostGIS 포함)
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: cinecatch_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x backend/cine-catch-server/gradlew
+
+    - name: Build with Gradle
+      run: |
+        cd backend/cine-catch-server
+        ./gradlew build --no-daemon
+      env:
+        SPRING_PROFILES_ACTIVE: test
+
+    - name: Run tests
+      run: |
+        cd backend/cine-catch-server
+        ./gradlew test --no-daemon
+      env:
+        SPRING_PROFILES_ACTIVE: test
+
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: backend-jar
+        path: backend/cine-catch-server/build/libs/*.jar
+        retention-days: 7
