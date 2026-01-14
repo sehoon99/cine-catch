@@ -16,10 +16,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # PostgreSQL 서비스 컨테이너 (테스트용)
+    # PostgreSQL 서비스 컨테이너 (PostGIS 포함)
     services:
       postgres:
-        image: postgres:15
+        image: postgis/postgis:15-3.3
         env:
           POSTGRES_USER: testuser
           POSTGRES_PASSWORD: testpass
@@ -51,18 +51,14 @@ jobs:
         cd backend/cine-catch-server
         ./gradlew build --no-daemon
       env:
-        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/cinecatch_test
-        SPRING_DATASOURCE_USERNAME: testuser
-        SPRING_DATASOURCE_PASSWORD: testpass
+        SPRING_PROFILES_ACTIVE: test
 
     - name: Run tests
       run: |
         cd backend/cine-catch-server
         ./gradlew test --no-daemon
       env:
-        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/cinecatch_test
-        SPRING_DATASOURCE_USERNAME: testuser
-        SPRING_DATASOURCE_PASSWORD: testpass
+        SPRING_PROFILES_ACTIVE: test
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v2
