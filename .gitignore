@@ -12,3 +12,10 @@ mega.py
 *.iml
 *.ipr
 out/
+
+# Terraform 관련 제외 설정
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+infra/terraform/.terraform/
