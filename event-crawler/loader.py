@@ -1,4 +1,6 @@
 import asyncio
+import uuid
+
 import asyncpg
 import json
 import os
@@ -45,10 +47,19 @@ async def save_to_db():
         for data in results:
             async with conn.transaction():
                 # --- [Step 2] 영화(movies) 및 이벤트(events) 기본 정보 업데이트 ---
+                # movie_id = await conn.fetchval("""
+                #     INSERT INTO movies (title) VALUES ($1)
+                #     ON CONFLICT (title)
+                #     DO UPDATE SET title=EXCLUDED.title
+                #     RETURNING id
+                # """, data['movie_title'])
                 movie_id = await conn.fetchval("""
-                    INSERT INTO movies (title) VALUES ($1) 
-                    ON CONFLICT (title) DO UPDATE SET title=EXCLUDED.title RETURNING id
-                """, data['movie_title'])
+                    INSERT INTO movies (id, title)
+                    VALUES ($1, $1)
+                    ON CONFLICT (title) 
+                    DO UPDATE SET title = EXCLUDED.title
+                    RETURNING id
+                  """, data['movie_title'])
                 
                 event_no = str(data['event_no'])
                 start_at = datetime.strptime(data['start_date'], '%Y%m%d') if data['start_date'] else datetime.now()
@@ -85,12 +96,13 @@ async def save_to_db():
 
                         # 상태가 변경되었거나 새로운 데이터인 경우에만 작업 수행
                         if old_status != new_status:
+                            random_id = str(uuid.uuid4())
                             await conn.execute("""
-                                INSERT INTO event_location (theater_id, event_id, status, updated_at)
-                                VALUES ($1, $2, $3, NOW())
+                                INSERT INTO event_location (theater_id, event_id, status,id, updated_at)
+                                VALUES ($1, $2, $3, $4, NOW())
                                 ON CONFLICT (theater_id, event_id) 
                                 DO UPDATE SET status = EXCLUDED.status, updated_at = NOW()
-                            """, t_id, event_no, new_status)
+                            """, t_id, event_no, new_status,random_id)
                             
                             # 로그 메시지 생성 (기존 로직 유지)
                             diff_text = f"[{old_status}] → [{new_status}]" if old_status else f"[신규 등록: {new_status}]"
