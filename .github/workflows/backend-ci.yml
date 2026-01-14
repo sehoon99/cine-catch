@@ -15,6 +15,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
 
     # PostgreSQL 서비스 컨테이너 (PostGIS 포함)
     services:
@@ -60,20 +64,6 @@ jobs:
       env:
         SPRING_PROFILES_ACTIVE: test
 
-    - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          backend/cine-catch-server/build/test-results/**/*.xml
-
-    - name: Upload test coverage
-      uses: codecov/codecov-action@v4
-      if: always()
-      with:
-        files: ./backend/cine-catch-server/build/reports/jacoco/test/jacocoTestReport.xml
-        flags: backend
-        fail_ci_if_error: false
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
