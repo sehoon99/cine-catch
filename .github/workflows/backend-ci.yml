@@ -1,0 +1,88 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, entity ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # PostgreSQL 서비스 컨테이너 (테스트용)
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: cinecatch_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x backend/cine-catch-server/gradlew
+
+    - name: Build with Gradle
+      run: |
+        cd backend/cine-catch-server
+        ./gradlew build --no-daemon
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/cinecatch_test
+        SPRING_DATASOURCE_USERNAME: testuser
+        SPRING_DATASOURCE_PASSWORD: testpass
+
+    - name: Run tests
+      run: |
+        cd backend/cine-catch-server
+        ./gradlew test --no-daemon
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/cinecatch_test
+        SPRING_DATASOURCE_USERNAME: testuser
+        SPRING_DATASOURCE_PASSWORD: testpass
+
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          backend/cine-catch-server/build/test-results/**/*.xml
+
+    - name: Upload test coverage
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        files: ./backend/cine-catch-server/build/reports/jacoco/test/jacocoTestReport.xml
+        flags: backend
+        fail_ci_if_error: false
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: backend-jar
+        path: backend/cine-catch-server/build/libs/*.jar
+        retention-days: 7
