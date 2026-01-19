@@ -1,19 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-create table spatial_ref_sys
-(
-    srid      integer not null
-        primary key
-        constraint spatial_ref_sys_srid_check
-            check ((srid > 0) AND (srid <= 998999)),
-    auth_name varchar(256),
-    auth_srid integer,
-    srtext    varchar(2048),
-    proj4text varchar(2048)
-);
-
-grant select on spatial_ref_sys to public;
-
 create table movies
 (
     release_date  date,
@@ -29,8 +15,6 @@ create table movies
             unique
 );
 
-alter table movies
-    owner to cinecatch;
 
 create table events
 (
@@ -54,8 +38,6 @@ create table events
     title      varchar(255) not null
 );
 
-alter table events
-    owner to cinecatch;
 
 create table theaters
 (
@@ -67,8 +49,6 @@ create table theaters
     location geometry(Point, 4326) not null
 );
 
-alter table theaters
-    owner to cinecatch;
 
 create table event_location
 (
@@ -86,8 +66,6 @@ create table event_location
         unique (theater_id, event_id)
 );
 
-alter table event_location
-    owner to cinecatch;
 
 create table members
 (
@@ -104,8 +82,6 @@ create table members
     password   varchar(255) not null
 );
 
-alter table members
-    owner to cinecatch;
 
 create table theater_subscription
 (
@@ -120,8 +96,6 @@ create table theater_subscription
             references theaters
 );
 
-alter table theater_subscription
-    owner to cinecatch;
 
 create table users
 (
@@ -139,6 +113,4 @@ create table users
     role       varchar(255) not null
 );
 
-alter table users
-    owner to cinecatch;
 
