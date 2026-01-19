@@ -24,4 +24,3 @@ public class MemberRequest {
     private Double latitude;
     private Double longitude;
 }
-
