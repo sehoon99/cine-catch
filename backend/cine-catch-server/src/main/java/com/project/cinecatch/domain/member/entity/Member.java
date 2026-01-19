@@ -2,13 +2,12 @@ package com.project.cinecatch.domain.member.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.locationtech.jts.geom.Point;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users") //
+@Table(name = "members")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -30,9 +29,6 @@ public class Member {
     @Column(name = "fcm_token")
     private String fcmToken;
 
-    @Column(columnDefinition = "geometry(Point, 4326)")
-    private Point location;
-
     @Column(nullable = false)
     private String role = "USER";
 
@@ -41,11 +37,10 @@ public class Member {
     private LocalDateTime createdAt;
 
     @Builder
-    public Member(String email, String password, String nickname, Point location) {
+    public Member(String email, String password, String nickname) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        //this.location = location;
         this.role = "USER";
     }
 }
