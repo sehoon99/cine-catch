@@ -12,9 +12,6 @@ create table spatial_ref_sys
     proj4text varchar(2048)
 );
 
-alter table spatial_ref_sys
-    owner to rdsadmin;
-
 grant select on spatial_ref_sys to public;
 
 create table movies
