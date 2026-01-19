@@ -7,6 +7,10 @@ import com.project.cinecatch.domain.member.entity.Member;
 import com.project.cinecatch.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +22,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.project.cinecatch.global.security.JwtTokenProvider jwtTokenProvider;
+    private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(),4326);
 
     public void signUp(MemberRequest request) {
         Member member = Member.builder()
