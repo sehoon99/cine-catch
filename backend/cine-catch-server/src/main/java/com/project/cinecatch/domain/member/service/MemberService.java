@@ -26,19 +26,10 @@ public class MemberService {
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     public void signUp(MemberRequest request) {
-        // 중복 체크 로직 생략
-
-        Point point = null;
-        if (request.getLatitude() != null && request.getLongitude() != null) {
-            // 위도, 경도 -> Point 변환 (경도, 위도 순서 주의)
-            point = geometryFactory.createPoint(new Coordinate(request.getLongitude(), request.getLatitude()));
-        }
-
         Member member = Member.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .nickname(request.getNickname())
-                .location(point)
                 .build();
 
         memberRepository.save(member);
