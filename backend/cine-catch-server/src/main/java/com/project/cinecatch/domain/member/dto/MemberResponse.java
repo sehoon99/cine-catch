@@ -1,6 +1,6 @@
 package com.project.cinecatch.domain.member.dto;
 
-import com.project.cinecatch.domain.member.entity.User;
+import com.project.cinecatch.domain.member.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,12 +16,12 @@ public class MemberResponse {
     private String nickname;
     private String role;
 
-    public static MemberResponse from(User user) {
+    public static MemberResponse from(Member member) {
         return MemberResponse.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .role(user.getRole().name())
+                .id(member.getId())
+                .email(member.getEmail())
+                .nickname(member.getNickname())
+                .role(member.getRole())
                 .build();
     }
 }
