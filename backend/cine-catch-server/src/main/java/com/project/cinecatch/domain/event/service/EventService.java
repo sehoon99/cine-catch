@@ -1,6 +1,7 @@
 package com.project.cinecatch.domain.event.service;
 
 import com.project.cinecatch.domain.event.dto.EventResponse;
+import com.project.cinecatch.domain.event.dto.TheaterEventResponse;
 import com.project.cinecatch.domain.event.entity.Event;
 import com.project.cinecatch.domain.event.entity.EventLocation;
 import com.project.cinecatch.domain.event.repository.EventLocationRepository;
@@ -89,6 +90,21 @@ public class EventService {
                     List<EventLocation> locations = eventLocationRepository.findByEventIdWithTheater(event.getId());
                     return EventResponse.of(event, locations);
                 })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 특정 극장에서 진행 중인 이벤트 목록 조회
+     */
+    public List<TheaterEventResponse> getEventsByTheaterId(String theaterId) {
+        List<EventLocation> locations = eventLocationRepository.findByTheaterIdWithEvent(theaterId);
+
+        // 현재 시간 이후에 끝나는 이벤트만 필터링 (진행 중인 이벤트)
+        LocalDateTime now = LocalDateTime.now();
+
+        return locations.stream()
+                .filter(loc -> loc.getEvent().getEndAt().isAfter(now))
+                .map(TheaterEventResponse::of)
                 .collect(Collectors.toList());
     }
 }

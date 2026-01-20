@@ -1,6 +1,7 @@
 package com.project.cinecatch.domain.event.controller;
 
 import com.project.cinecatch.domain.event.dto.EventResponse;
+import com.project.cinecatch.domain.event.dto.TheaterEventResponse;
 import com.project.cinecatch.domain.event.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -61,5 +62,16 @@ public class EventController {
         }
 
         return ResponseEntity.ok(event);
+    }
+
+    /**
+     * 특정 극장에서 진행 중인 이벤트 목록 조회
+     */
+    @GetMapping("/theater/{theaterId}")
+    public ResponseEntity<List<TheaterEventResponse>> getEventsByTheater(
+            @PathVariable String theaterId
+    ) {
+        List<TheaterEventResponse> events = eventService.getEventsByTheaterId(theaterId);
+        return ResponseEntity.ok(events);
     }
 }

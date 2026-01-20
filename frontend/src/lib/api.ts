@@ -102,6 +102,7 @@ export const API_ENDPOINTS = {
   EVENTS: '/api/events',
   EVENT_BY_ID: (id: string | number) => `/api/events/${id}`,
   EVENTS_NEARBY: '/api/events/nearby',
+  EVENTS_BY_THEATER: (id: string | number) => `/api/events/theater/${id}`,
 
   // Subscription endpoints
   SUBSCRIPTIONS: '/api/subscriptions',

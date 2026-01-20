@@ -1,20 +1,62 @@
-import { useState } from 'react';
-import { MapPin, List, Map as MapIcon } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { MapPin, List, Map as MapIcon, Navigation } from 'lucide-react';
 import { useTheaters } from '../lib/hooks';
+import { useGeolocation } from '../lib/useGeolocation';
+import { calculateDistance } from '../lib/distance';
 import { Slider } from './ui/slider';
+import { KakaoMap } from './KakaoMap';
 import type { Theater } from '../lib/mockData';
+
+// 거리 정보가 포함된 극장 타입
+interface TheaterWithDistance extends Theater {
+  calculatedDistance: number;
+}
 
 type ViewMode = 'map' | 'list';
 
-export function TheatersScreen() {
+interface TheaterClickInfo {
+  id: string;
+  name: string;
+  brand: string;
+  address: string;
+  distance: number;
+}
+
+interface TheatersScreenProps {
+  onTheaterClick?: (theater: TheaterClickInfo) => void;
+}
+
+export function TheatersScreen({ onTheaterClick }: TheatersScreenProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('map');
   const [radius, setRadius] = useState([5]);
 
   const { theaters, loading, error } = useTheaters();
 
-  const filteredTheaters = theaters.filter(
-    (theater) => theater.distance <= radius[0]
-  );
+  // 현재 위치 가져오기
+  const { latitude, longitude, error: geoError, loading: geoLoading } = useGeolocation();
+
+  // 현재 위치 또는 기본값 (서울 시청)
+  const currentLocation = {
+    lat: latitude ?? 37.5665,
+    lng: longitude ?? 126.978,
+  };
+
+  // 현재 위치 기준으로 각 극장의 거리 계산 + 필터링 + 정렬
+  const nearbyTheaters = useMemo((): TheaterWithDistance[] => {
+    return theaters
+      .map((theater) => ({
+        ...theater,
+        // 실제 거리 계산 (현재 위치 → 극장)
+        calculatedDistance: calculateDistance(
+          currentLocation.lat,
+          currentLocation.lng,
+          theater.lat,
+          theater.lng
+        ),
+      }))
+      .filter((theater) => theater.calculatedDistance <= radius[0]) // 반경 내만
+      .sort((a, b) => a.calculatedDistance - b.calculatedDistance); // 가까운 순 정렬
+  }, [theaters, currentLocation.lat, currentLocation.lng, radius]);
 
   if (loading) {
     return (
@@ -81,135 +123,171 @@ export function TheatersScreen() {
         </div>
       </div>
 
+      {/* 위치 상태 표시 */}
+      {geoLoading && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Navigation className="w-4 h-4 animate-pulse" />
+            <span>현재 위치를 가져오는 중...</span>
+          </div>
+        </div>
+      )}
+      {geoError && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2 text-sm text-amber-600">
+            <Navigation className="w-4 h-4" />
+            <span>{geoError} (서울 시청 기준으로 표시)</span>
+          </div>
+        </div>
+      )}
+
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
         {viewMode === 'map' ? (
-          <MapView theaters={filteredTheaters} radius={radius[0]} />
+          <MapView theaters={nearbyTheaters} radius={radius[0]} center={currentLocation} onTheaterClick={onTheaterClick} />
         ) : (
-          <ListView theaters={filteredTheaters} />
+          <ListView theaters={nearbyTheaters} onTheaterClick={onTheaterClick} />
         )}
       </div>
     </div>
   );
 }
 
-function MapView({ theaters, radius }: { theaters: Theater[]; radius: number }) {
-  const [selectedTheater, setSelectedTheater] = useState<string | null>(null);
+interface MapViewProps {
+  theaters: TheaterWithDistance[];
+  radius: number;
+  center: { lat: number; lng: number };
+  onTheaterClick?: (theater: TheaterClickInfo) => void;
+}
+
+function MapView({ theaters, radius, center, onTheaterClick }: MapViewProps) {
+  const [selectedTheater, setSelectedTheater] = useState<TheaterWithDistance | null>(null);
+
+  // KakaoMap에 전달할 극장 데이터 변환
+  const mapTheaters = theaters.map((theater) => ({
+    id: theater.id,
+    name: theater.name,
+    lat: theater.lat,
+    lng: theater.lng,
+    address: theater.address,
+  }));
+
+  // 마커 클릭 핸들러
+  const handleMarkerClick = (theater: { id: string; name: string; lat: number; lng: number }) => {
+    const fullTheater = theaters.find((t) => t.id === theater.id);
+    if (fullTheater) {
+      setSelectedTheater(fullTheater);
+    }
+  };
 
   return (
     <div className="relative h-full">
-      {/* Mock Map Background */}
-      <div className="absolute inset-0 bg-secondary/30 flex items-center justify-center">
-        <div className="relative w-full h-full overflow-hidden">
-          {/* Grid pattern to simulate map */}
-          <svg className="w-full h-full opacity-20">
-            <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path
-                  d="M 40 0 L 0 0 0 40"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
+      {/* 실제 Kakao Map - 내 위치 + 반경 표시 */}
+      <KakaoMap
+        theaters={mapTheaters}
+        center={center}
+        level={7}
+        radius={radius}
+        showMyLocation={true}
+        onMarkerClick={handleMarkerClick}
+      />
 
-          {/* Theater Markers */}
-          <div className="absolute inset-0 p-8">
-            {theaters.map((theater, index) => {
-              // Calculate pseudo-random positions based on lat/lng
-              const x = ((theater.lng + 74) * 1000) % 80;
-              const y = ((theater.lat - 40.74) * 2000) % 80;
-
-              return (
-                <button
-                  key={theater.id}
-                  onClick={() => setSelectedTheater(theater.id)}
-                  className="absolute transform -translate-x-1/2 -translate-y-full"
-                  style={{
-                    left: `${x}%`,
-                    top: `${y}%`,
-                  }}
-                >
-                  <MapPin
-                    className={`w-8 h-8 transition-colors ${
-                      selectedTheater === theater.id
-                        ? 'text-accent fill-accent'
-                        : 'text-destructive fill-destructive'
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Selected Theater Info Card */}
-          {selectedTheater && (
-            <div className="absolute bottom-4 left-4 right-4 bg-card rounded-2xl p-4 shadow-lg">
-              {(() => {
-                const theater = theaters.find((t) => t.id === selectedTheater);
-                if (!theater) return null;
-                return (
-                  <>
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3>{theater.name}</h3>
-                        <p className="text-sm text-muted-foreground">{theater.brand}</p>
-                      </div>
-                      <button
-                        onClick={() => setSelectedTheater(null)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{theater.address}</p>
-                    <div className="flex items-center gap-1 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{theater.distance} km away</span>
-                    </div>
-                  </>
-                );
-              })()}
+      {/* 선택된 극장 정보 카드 */}
+      {selectedTheater && (
+        <div
+          className="absolute bottom-4 left-4 right-4 bg-card rounded-2xl p-4 shadow-lg z-10 cursor-pointer hover:bg-accent/10 transition-colors"
+          onClick={() => {
+            if (onTheaterClick) {
+              onTheaterClick({
+                id: selectedTheater.id,
+                name: selectedTheater.name,
+                brand: selectedTheater.brand ?? 'CGV',
+                address: selectedTheater.address,
+                distance: selectedTheater.calculatedDistance,
+              });
+            }
+          }}
+        >
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h3 className="font-semibold">{selectedTheater.name} ({selectedTheater.brand ?? 'CGV'})</h3>
             </div>
-          )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTheater(null);
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">{selectedTheater.address}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-sm">
+              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <span>{selectedTheater.calculatedDistance.toFixed(1)} km</span>
+            </div>
+            <span className="text-sm text-accent">재고 확인 →</span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Radius Indicator */}
-      <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm">
-        Showing {theaters.length} theater{theaters.length !== 1 ? 's' : ''}
+      {/* 극장 개수 표시 */}
+      <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm z-10">
+        반경 {radius}km 내 {theaters.length}개 극장
       </div>
     </div>
   );
 }
 
-function ListView({ theaters }: { theaters: Theater[] }) {
+interface ListViewProps {
+  theaters: TheaterWithDistance[];
+  onTheaterClick?: (theater: TheaterClickInfo) => void;
+}
+
+function ListView({ theaters, onTheaterClick }: ListViewProps) {
+  const handleClick = (theater: TheaterWithDistance) => {
+    if (onTheaterClick) {
+      onTheaterClick({
+        id: theater.id,
+        name: theater.name,
+        brand: theater.brand ?? 'CGV',
+        address: theater.address,
+        distance: theater.calculatedDistance,
+      });
+    }
+  };
+
   return (
     <div className="overflow-y-auto h-full px-4">
       <div className="space-y-3 pb-4">
         {theaters.map((theater) => (
           <div
             key={theater.id}
-            className="bg-card rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+            onClick={() => handleClick(theater)}
+            className="bg-card rounded-2xl p-4 shadow-sm hover:shadow-md hover:bg-accent/10 transition-all cursor-pointer"
           >
             <div className="flex gap-4">
-              {/* Brand Logo Placeholder */}
+              {/* Brand Logo */}
               <div className="flex-shrink-0 w-16 h-16 bg-accent rounded-xl flex items-center justify-center">
                 <span className="text-lg font-semibold text-accent-foreground">
-                  {theater.brand.charAt(0)}
+                  {theater.brand?.charAt(0) ?? 'C'}
                 </span>
               </div>
 
               {/* Theater Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="mb-1">{theater.name}</h3>
+                <h3 className="font-semibold mb-1">
+                  {theater.name} <span className="text-muted-foreground font-normal">({theater.brand ?? 'CGV'})</span>
+                </h3>
                 <p className="text-sm text-muted-foreground mb-2">{theater.address}</p>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>{theater.distance} km away</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>{theater.calculatedDistance.toFixed(1)} km</span>
+                  </div>
+                  <span className="text-sm text-accent">재고 확인 →</span>
                 </div>
               </div>
             </div>
@@ -219,8 +297,8 @@ function ListView({ theaters }: { theaters: Theater[] }) {
         {theaters.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No theaters found in this radius</p>
-            <p className="text-sm">Try increasing the search radius</p>
+            <p>주변에 극장이 없습니다</p>
+            <p className="text-sm">검색 반경을 늘려보세요</p>
           </div>
         )}
       </div>
