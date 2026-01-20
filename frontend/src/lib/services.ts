@@ -19,6 +19,17 @@ export interface EventResponse {
   theaters: TheaterInventoryResponse[];
 }
 
+export interface TheaterEventResponse {
+  eventId: string;
+  title: string;
+  movieTitle: string;
+  type: string;
+  status: string;
+  imageUrl: string | null;
+  startAt: string;
+  endAt: string;
+}
+
 export interface TheaterInventoryResponse {
   theaterName: string;
   status: string;
@@ -83,6 +94,10 @@ export const eventService = {
     const url = `${API_ENDPOINTS.EVENTS}?movieTitle=${encodeURIComponent(movieTitle)}`;
     const response = await apiClient.get<EventResponse[]>(url);
     return response.map(mapEventResponseToMovieEvent);
+  },
+
+  async getEventsByTheater(theaterId: string): Promise<TheaterEventResponse[]> {
+    return apiClient.get<TheaterEventResponse[]>(API_ENDPOINTS.EVENTS_BY_THEATER(theaterId));
   },
 };
 

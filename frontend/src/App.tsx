@@ -2,17 +2,27 @@ import { useState } from 'react';
 import { Home, Map, Bell, Settings, MapPin } from 'lucide-react';
 import { HomeScreen } from './components/HomeScreen';
 import { TheatersScreen } from './components/TheatersScreen';
+import { TheaterDetailScreen } from './components/TheaterDetailScreen';
 import { EventDetailScreen } from './components/EventDetailScreen';
 import { SubscriptionsScreen } from './components/SubscriptionsScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
 
-type Screen = 'home' | 'theaters' | 'subscriptions' | 'settings' | 'event-detail';
+type Screen = 'home' | 'theaters' | 'subscriptions' | 'settings' | 'event-detail' | 'theater-detail';
+
+interface TheaterInfo {
+  id: string;
+  name: string;
+  brand: string;
+  address: string;
+  distance: number;
+}
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedTheater, setSelectedTheater] = useState<TheaterInfo | null>(null);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
 
   const navigateToEventDetail = (eventId: string) => {
@@ -20,9 +30,19 @@ export default function App() {
     setCurrentScreen('event-detail');
   };
 
+  const navigateToTheaterDetail = (theater: TheaterInfo) => {
+    setSelectedTheater(theater);
+    setCurrentScreen('theater-detail');
+  };
+
   const navigateBack = () => {
-    setCurrentScreen('home');
-    setSelectedEventId(null);
+    if (currentScreen === 'theater-detail') {
+      setCurrentScreen('theaters');
+      setSelectedTheater(null);
+    } else {
+      setCurrentScreen('home');
+      setSelectedEventId(null);
+    }
   };
 
   const updateLocation = () => {
@@ -43,16 +63,19 @@ export default function App() {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto pb-20">
           {currentScreen === 'home' && <HomeScreen onEventClick={navigateToEventDetail} />}
-          {currentScreen === 'theaters' && <TheatersScreen />}
+          {currentScreen === 'theaters' && <TheatersScreen onTheaterClick={navigateToTheaterDetail} />}
           {currentScreen === 'subscriptions' && <SubscriptionsScreen />}
           {currentScreen === 'settings' && <SettingsScreen />}
           {currentScreen === 'event-detail' && selectedEventId && (
             <EventDetailScreen eventId={selectedEventId} onBack={navigateBack} />
           )}
+          {currentScreen === 'theater-detail' && selectedTheater && (
+            <TheaterDetailScreen theater={selectedTheater} onBack={navigateBack} />
+          )}
         </main>
 
         {/* Floating Action Button for Location */}
-        {currentScreen !== 'event-detail' && (
+        {currentScreen !== 'event-detail' && currentScreen !== 'theater-detail' && (
           <button
             onClick={updateLocation}
             disabled={isUpdatingLocation}
@@ -66,7 +89,7 @@ export default function App() {
         )}
 
         {/* Bottom Navigation Bar */}
-        {currentScreen !== 'event-detail' && (
+        {currentScreen !== 'event-detail' && currentScreen !== 'theater-detail' && (
           <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto">
             <div className="flex justify-around items-center h-16 px-2">
               <NavButton
