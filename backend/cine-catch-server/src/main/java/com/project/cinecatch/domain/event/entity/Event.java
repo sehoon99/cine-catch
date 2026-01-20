@@ -16,7 +16,7 @@ public class Event {
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "movie_id", nullable = false)
+    @JoinColumn(name = "movie_title", nullable = false)
     private Movie movie;
 
     @Enumerated(EnumType.STRING)

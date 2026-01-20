@@ -47,13 +47,13 @@ async def save_to_db():
         for data in results:
             async with conn.transaction():
                 # --- [Step 2] 영화(movies) 및 이벤트(events) 기본 정보 업데이트 ---
-                # movie_id = await conn.fetchval("""
+                # movie_title = await conn.fetchval("""
                 #     INSERT INTO movies (title) VALUES ($1)
                 #     ON CONFLICT (title)
                 #     DO UPDATE SET title=EXCLUDED.title
                 #     RETURNING id
                 # """, data['movie_title'])
-                movie_id = await conn.fetchval("""
+                movie_title = await conn.fetchval("""
                     INSERT INTO movies (id, title)
                     VALUES ($1, $1)
                     ON CONFLICT (title) 
@@ -64,15 +64,16 @@ async def save_to_db():
                 event_no = str(data['event_no'])
                 start_at = datetime.strptime(data['start_date'], '%Y%m%d') if data['start_date'] else datetime.now()
                 end_at = datetime.strptime(data['end_date'], '%Y%m%d') if data['end_date'] else datetime.now()
+                full_event_title = f"{data['movie_title']} - {data['event_title']}"
 
                 await conn.execute("""
-                    INSERT INTO events (id, movie_id, title, start_at, end_at)
-                    VALUES ($1, $2, $3, $4, $5)
+                    INSERT INTO events (id, movie_title, title, start_at, end_at, created_at)
+                    VALUES ($1, $2, $3, $4, $5, NOW())
                     ON CONFLICT (id) DO UPDATE SET 
                         title = EXCLUDED.title,
                         start_at = EXCLUDED.start_at,
                         end_at = EXCLUDED.end_at
-                """, event_no, movie_id, data['event_title'], start_at, end_at)
+                """, event_no, movie_title, full_event_title, start_at, end_at)
 
                 # --- [Step 3] 지점별 재고 상태 비교 및 '진짜 변경' 건만 기록 ---
                 for region, theater_list in data['regions'].items():
