@@ -4,9 +4,10 @@ import com.project.cinecatch.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, UUID> {
 
     // 1. 로그인할 때 이메일로 사용자를 찾아야 함~함
     Optional<Member> findByEmail(String email);
