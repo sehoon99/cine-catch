@@ -1,0 +1,1 @@
+ALTER TABLE events RENAME COLUMN movie_id TO movie_title;
