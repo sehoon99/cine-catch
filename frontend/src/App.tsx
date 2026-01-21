@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Home, Map, Bell, Settings, MapPin } from 'lucide-react';
 import { HomeScreen } from './components/HomeScreen';
 import { TheatersScreen } from './components/TheatersScreen';
@@ -6,8 +6,11 @@ import { TheaterDetailScreen } from './components/TheaterDetailScreen';
 import { EventDetailScreen } from './components/EventDetailScreen';
 import { SubscriptionsScreen } from './components/SubscriptionsScreen';
 import { SettingsScreen } from './components/SettingsScreen';
+import { AuthScreen } from './components/AuthScreen';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
+import { clearAuthState, getAuthState, isAuthValid, type AuthState } from './lib/auth';
+import { pushNotificationService } from './lib/pushNotificationService';
 
 type Screen = 'home' | 'theaters' | 'subscriptions' | 'settings' | 'event-detail' | 'theater-detail';
 
@@ -24,6 +27,52 @@ export default function App() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedTheater, setSelectedTheater] = useState<TheaterInfo | null>(null);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+  const [authState, setAuthState] = useState<AuthState | null>(() => getAuthState());
+  const isAuthenticated = isAuthValid(authState);
+
+  useEffect(() => {
+    if (!isAuthenticated && authState) {
+      clearAuthState();
+      setAuthState(null);
+    }
+  }, [authState, isAuthenticated]);
+
+  // 푸시 알림 초기화 (로그인 후)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const initPushNotifications = async () => {
+      try {
+        // 푸시 알림 초기화 및 토큰 발급
+        const token = await pushNotificationService.initialize();
+
+        if (token) {
+          // 토큰을 서버에 저장
+          const saved = await pushNotificationService.saveTokenToServer(token);
+          if (saved) {
+            console.log('[App] FCM 토큰 서버 저장 완료');
+          }
+        }
+
+        // 알림 리스너 설정
+        pushNotificationService.setupListeners((notification) => {
+          // 포그라운드에서 알림 수신 시 토스트로 표시
+          toast.info(notification.title || '새 알림', {
+            description: notification.body,
+          });
+        });
+      } catch (error) {
+        console.error('[App] 푸시 알림 초기화 실패:', error);
+      }
+    };
+
+    initPushNotifications();
+
+    // 클린업
+    return () => {
+      pushNotificationService.removeListeners();
+    };
+  }, [isAuthenticated]);
 
   const navigateToEventDetail = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -62,20 +111,37 @@ export default function App() {
       <div className="flex flex-col h-screen max-w-md mx-auto bg-background text-foreground relative">
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto pb-20">
-          {currentScreen === 'home' && <HomeScreen onEventClick={navigateToEventDetail} />}
-          {currentScreen === 'theaters' && <TheatersScreen onTheaterClick={navigateToTheaterDetail} />}
-          {currentScreen === 'subscriptions' && <SubscriptionsScreen />}
-          {currentScreen === 'settings' && <SettingsScreen />}
-          {currentScreen === 'event-detail' && selectedEventId && (
-            <EventDetailScreen eventId={selectedEventId} onBack={navigateBack} />
-          )}
-          {currentScreen === 'theater-detail' && selectedTheater && (
-            <TheaterDetailScreen theater={selectedTheater} onBack={navigateBack} />
+          {!isAuthenticated ? (
+            <AuthScreen onAuthSuccess={setAuthState} />
+          ) : (
+            <>
+              {currentScreen === 'home' && <HomeScreen onEventClick={navigateToEventDetail} />}
+              {currentScreen === 'theaters' && <TheatersScreen onTheaterClick={navigateToTheaterDetail} />}
+              {currentScreen === 'subscriptions' && <SubscriptionsScreen />}
+              {currentScreen === 'settings' && (
+                <SettingsScreen
+                  authEmail={authState?.email}
+                  onLogout={() => {
+                    clearAuthState();
+                    setAuthState(null);
+                    setCurrentScreen('home');
+                  }}
+                />
+              )}
+              {currentScreen === 'event-detail' && selectedEventId && (
+                <EventDetailScreen eventId={selectedEventId} onBack={navigateBack} />
+              )}
+              {currentScreen === 'theater-detail' && selectedTheater && (
+                <TheaterDetailScreen theater={selectedTheater} onBack={navigateBack} />
+              )}
+            </>
           )}
         </main>
 
         {/* Floating Action Button for Location */}
-        {currentScreen !== 'event-detail' && currentScreen !== 'theater-detail' && (
+        {isAuthenticated &&
+          currentScreen !== 'event-detail' &&
+          currentScreen !== 'theater-detail' && (
           <button
             onClick={updateLocation}
             disabled={isUpdatingLocation}
@@ -89,7 +155,9 @@ export default function App() {
         )}
 
         {/* Bottom Navigation Bar */}
-        {currentScreen !== 'event-detail' && currentScreen !== 'theater-detail' && (
+        {isAuthenticated &&
+          currentScreen !== 'event-detail' &&
+          currentScreen !== 'theater-detail' && (
           <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto">
             <div className="flex justify-around items-center h-16 px-2">
               <NavButton

@@ -5,6 +5,8 @@ import asyncpg
 import json
 import os
 import glob
+import urllib.error
+import urllib.request
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -19,6 +21,50 @@ DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "port": int(os.getenv("DB_PORT", 5432))
 }
+
+NOTIFICATION_API_BASE_URL = os.getenv("NOTIFICATION_API_BASE_URL", "http://localhost:8080")
+NOTIFICATION_API_TIMEOUT = float(os.getenv("NOTIFICATION_API_TIMEOUT", "5"))
+
+def _post_notification(path, payload):
+    base_url = NOTIFICATION_API_BASE_URL.strip()
+    if not base_url:
+        return False
+
+    url = f"{base_url.rstrip('/')}{path}"
+    data = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=data,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=NOTIFICATION_API_TIMEOUT) as response:
+            response.read()
+        return True
+    except urllib.error.HTTPError as e:
+        error_body = ""
+        try:
+            error_body = e.read().decode("utf-8")
+        except Exception:
+            pass
+        print(f"⚠️ 알림 API 호출 실패: {e.code} {e.reason} {error_body}".strip())
+    except Exception as e:
+        print(f"⚠️ 알림 API 호출 실패: {e}")
+    return False
+
+async def _notify_backend(path, payload):
+    return await asyncio.to_thread(_post_notification, path, payload)
+
+async def _send_notifications(pending_notifications):
+    if not pending_notifications:
+        return
+    sent_count = 0
+    for path, payload in pending_notifications:
+        if await _notify_backend(path, payload):
+            sent_count += 1
+    print(f"🔔 알림 API 호출 완료: {sent_count}/{len(pending_notifications)}")
 
 async def save_to_db():
     # --- [Step 1] 최신 JSON 파일 찾기 ---
@@ -45,6 +91,7 @@ async def save_to_db():
         theater_map = {row['name']: row['id'] for row in theater_rows}
 
         for data in results:
+            pending_notifications = []
             async with conn.transaction():
                 # --- [Step 2] 영화(movies) 및 이벤트(events) 기본 정보 업데이트 ---
                 # movie_title = await conn.fetchval("""
@@ -110,6 +157,26 @@ async def save_to_db():
                             log_entry = f"[{datetime.now().strftime('%Y%m%d_%H%M%S')}] {data['movie_title']} | {t_name} | {diff_text}"
                             logs.append(log_entry)
                             change_count += 1
+                            
+                            notification_payload = {
+                                "theaterId": str(t_id),
+                                "theaterName": t_name,
+                                "eventTitle": full_event_title
+                            }
+                            if old_status is None:
+                                pending_notifications.append((
+                                    "/api/internal/notifications/event-update",
+                                    notification_payload
+                                ))
+                            else:
+                                status_payload = dict(notification_payload)
+                                status_payload["newStatus"] = new_status
+                                pending_notifications.append((
+                                    "/api/internal/notifications/status-change",
+                                    status_payload
+                                ))
+
+            await _send_notifications(pending_notifications)
 
         # --- [Step 4] 로그 파일 및 결과 출력 (기존 로직 유지) ---
         os.makedirs("logs", exist_ok=True)
