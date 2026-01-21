@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cine Catch</string>
+    <string name="title_activity_main">Cine Catch</string>
+    <string name="package_name">com.cinecatch.app</string>
+    <string name="custom_url_scheme">com.cinecatch.app</string>
+</resources>

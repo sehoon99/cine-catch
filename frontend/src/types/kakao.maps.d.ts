@@ -2,6 +2,9 @@
 // 참고: https://apis.map.kakao.com/web/documentation/
 
 declare namespace kakao.maps {
+  // SDK 수동 로드 함수 (autoload=false 사용 시)
+  function load(callback: () => void): void;
+
   // 지도 생성 옵션
   interface MapOptions {
     center: LatLng;

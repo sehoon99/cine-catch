@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/cli": "^8.0.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/geolocation": "^8.0.0",
+    "@capacitor/push-notifications": "^8.0.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -34,6 +39,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
+    "firebase": "^12.8.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.487.0",
     "next-themes": "^0.4.6",
@@ -61,6 +67,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android": "npm run build && npx cap sync && npx cap open android",
+    "android:sync": "npm run build && npx cap sync"
   }
 }

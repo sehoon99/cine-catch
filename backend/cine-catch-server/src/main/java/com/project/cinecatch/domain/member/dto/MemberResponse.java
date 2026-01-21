@@ -6,12 +6,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberResponse {
-    private Long id;
+    private UUID id;
     private String email;
     private String nickname;
     private String role;

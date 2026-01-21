@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { theaterService, eventService } from './services';
+import { theaterService, eventService, subscriptionService, SubscriptionResponse } from './services';
 import { MovieEvent, Theater } from './mockData';
 
 // Use mock data flag - set to false to use real API
@@ -267,4 +267,71 @@ export function useSearchEvents(movieTitle?: string) {
   }, [movieTitle, search]);
 
   return { events, loading, error, search };
+}
+
+export function useSubscriptions() {
+  const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>([]);
+  const [subscribedTheaterIds, setSubscribedTheaterIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSubscriptions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [subs, ids] = await Promise.all([
+        subscriptionService.getMySubscriptions(),
+        subscriptionService.getSubscribedTheaterIds(),
+      ]);
+      setSubscriptions(subs);
+      setSubscribedTheaterIds(ids);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch subscriptions');
+      console.error('Error fetching subscriptions:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
+
+  const subscribe = useCallback(async (theaterId: string) => {
+    try {
+      const newSub = await subscriptionService.subscribe(theaterId);
+      setSubscriptions(prev => [...prev, newSub]);
+      setSubscribedTheaterIds(prev => new Set([...prev, theaterId]));
+      return true;
+    } catch (err) {
+      console.error('Error subscribing:', err);
+      throw err;
+    }
+  }, []);
+
+  const unsubscribe = useCallback(async (theaterId: string) => {
+    try {
+      await subscriptionService.unsubscribe(theaterId);
+      setSubscriptions(prev => prev.filter(s => s.theaterId !== theaterId));
+      setSubscribedTheaterIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(theaterId);
+        return newSet;
+      });
+      return true;
+    } catch (err) {
+      console.error('Error unsubscribing:', err);
+      throw err;
+    }
+  }, []);
+
+  return {
+    subscriptions,
+    subscribedTheaterIds,
+    loading,
+    error,
+    subscribe,
+    unsubscribe,
+    refetch: fetchSubscriptions,
+  };
 }
