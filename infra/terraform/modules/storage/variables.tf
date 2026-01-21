@@ -20,3 +20,7 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "vpc_id" {}
+
+variable "public_subnet_ids" {}
