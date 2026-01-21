@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Theater {
   id: string;
@@ -45,15 +45,26 @@ export function KakaoMap({
   const myLocationMarkerRef = useRef<kakao.maps.Marker | null>(null);
   // 반경 원 ref
   const circleRef = useRef<kakao.maps.Circle | null>(null);
+  // SDK 로드 상태
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
 
-  // 1. 지도 초기화 (컴포넌트 마운트 시 1회 실행)
+  // 1. 카카오맵 SDK 로드 대기
   useEffect(() => {
-    if (!mapContainerRef.current) return;
-
     if (!window.kakao || !window.kakao.maps) {
       console.error('Kakao Maps SDK가 로드되지 않았습니다.');
       return;
     }
+
+    // autoload=false로 설정했으므로 수동으로 로드
+    window.kakao.maps.load(() => {
+      console.log('Kakao Maps SDK 로드 완료');
+      setIsSDKLoaded(true);
+    });
+  }, []);
+
+  // 2. 지도 초기화 (SDK 로드 후 실행)
+  useEffect(() => {
+    if (!isSDKLoaded || !mapContainerRef.current) return;
 
     const options: kakao.maps.MapOptions = {
       center: new kakao.maps.LatLng(center.lat, center.lng),
@@ -76,7 +87,7 @@ export function KakaoMap({
         circleRef.current.setMap(null);
       }
     };
-  }, []);
+  }, [isSDKLoaded]);
 
   // 2. 내 위치 마커 + 반경 원 표시
   useEffect(() => {

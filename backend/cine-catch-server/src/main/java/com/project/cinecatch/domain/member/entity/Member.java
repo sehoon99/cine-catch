@@ -44,4 +44,8 @@ public class Member {
         this.nickname = nickname;
         this.role = "USER";
     }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
 }
