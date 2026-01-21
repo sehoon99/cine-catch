@@ -20,3 +20,8 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "vpc_id" {
+  description = "vpc_id"
+  type        = string
+}

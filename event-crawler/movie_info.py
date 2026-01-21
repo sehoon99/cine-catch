@@ -42,12 +42,23 @@ async def sync_movies_from_events():
     conn = await asyncpg.connect(**DB_CONFIG)
 
     try:
-        # 1. events 테이블에서 고유한 movie_id(제목) 리스트 추출
-        # movie_id 컬럼에 영화 제목이 들어있는 경우를 기준으로 함
-        rows = await conn.fetch("SELECT DISTINCT movie_title FROM events")
+        # 🌟 수정 포인트 1:
+        # events 테이블에 있는 영화들 중, movies 테이블에 없거나 external_code가 null/빈값인 것만 추출
+        # LEFT JOIN을 사용하여 movies 테이블의 상태를 체크합니다.
+        query = """
+                SELECT DISTINCT e.movie_title
+                FROM events e
+                LEFT JOIN movies m ON e.movie_title = m.id
+                WHERE m.external_code IS NULL OR m.external_code = '' \
+                """
+        rows = await conn.fetch(query)
         movie_titles = [row['movie_title'] for row in rows if row['movie_title']]
 
-        print(f"📦 events 테이블에서 {len(movie_titles)}개의 영화 제목을 발견했습니다.")
+        if not movie_titles:
+            print("✅ 모든 영화의 상세 정보가 이미 업데이트 되어 있습니다.")
+            return 0
+
+        print(f"📦 업데이트가 필요한 {len(movie_titles)}개의 영화를 발견했습니다.")
 
         async with aiohttp.ClientSession() as session:
             for title in movie_titles:
@@ -56,6 +67,8 @@ async def sync_movies_from_events():
                     movie_cd = await get_movie_code(session, title)
                     if not movie_cd:
                         print(f"⚠️ '{title}'의 코드를 찾을 수 없습니다. (패스)")
+                        # 코드를 못 찾은 경우에도 다음 실행 때 또 찾지 않게 하려면
+                        # 여기에 더미 데이터라도 넣는 로직을 추가할 수 있습니다.
                         continue
 
                     # Step 2: 상세 정보 가져오기
@@ -73,7 +86,6 @@ async def sync_movies_from_events():
                     director = ", ".join([d['peopleNm'] for d in detail.get('directors', [])])
 
                     # Step 3: movies 테이블에 INSERT (이미 있으면 UPDATE)
-                    # 사진의 컬럼 구조: id, title, release_date, genre, director, external_code
                     await conn.execute("""
                                        INSERT INTO movies (id, title, release_date, genre, director, external_code, created_at)
                                        VALUES ($1, $1, $2, $3, $4, $5, NOW())
@@ -84,15 +96,16 @@ async def sync_movies_from_events():
                                                                    external_code = EXCLUDED.external_code
                                        """, title, release_date, genre, director, movie_cd)
 
-                    print(f"✅ 저장/업데이트 완료: {title}")
+                    print(f"✅ 상세 정보 업데이트 완료: {title}")
 
                 except Exception as e:
                     print(f"❌ '{title}' 처리 중 오류: {e}")
 
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1) # API 속도 제한 방지
 
     finally:
         await conn.close()
+    return len(movie_titles)
 
-if __name__ == "__main__":
-    asyncio.run(sync_movies_from_events())
+# if __name__ == "__main__":
+#     asyncio.run(sync_movies_from_events())

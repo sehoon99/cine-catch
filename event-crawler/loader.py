@@ -196,5 +196,5 @@ async def save_to_db():
     finally:
         await conn.close()
 
-if __name__ == "__main__":
-    asyncio.run(save_to_db())
+# if __name__ == "__main__":
+#     asyncio.run(save_to_db())

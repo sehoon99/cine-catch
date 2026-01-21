@@ -20,3 +20,12 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+variable "public_subnet_id" {
+  description = "public_subnet_id"
+  type        = string
+}
+
+variable "security_group_id" {
+  description = "security_group_id"
+  type        = string
+}
