@@ -76,8 +76,8 @@ public class PythonBatchRunner {
             if (crawlerSuccess) {
                 log.info(">>>>>> STEP 1 성공: 크롤링 완료, 로딩 시작");
 
-                // STEP 2: DB 적재 (loader.py)
-                boolean loaderSuccess = runProcess(pythonPath, pythonModuleDir, "loader.py");
+                // STEP 2: DB 적재 (main.py)
+                boolean loaderSuccess = runProcess(pythonPath, pythonModuleDir, "main.py");
 
                 if (loaderSuccess) {
                     log.info(">>>>>> STEP 2 성공: DB 적재까지 모두 완료");

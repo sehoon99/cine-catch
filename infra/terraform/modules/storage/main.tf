@@ -48,6 +48,14 @@ resource "aws_db_instance" "cine_catch_db" {
   }
 }
 
+#영화 이미지 s3 버킷
+resource "aws_s3_bucket" "cine_catch_image" {
+  bucket = "cine-catch-image"
+
+  # 콘솔에서 설정한 옵션이 있다면 여기에 추가하세요.
+  # 없으면 일단 기본값으로 import한 뒤 나중에 수정 가능합니다.
+}
+
 output "db_endpoint" {
   value = aws_db_instance.cine_catch_db.endpoint
 }
