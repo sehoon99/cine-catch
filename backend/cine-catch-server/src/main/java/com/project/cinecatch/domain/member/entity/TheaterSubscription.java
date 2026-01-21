@@ -2,18 +2,21 @@ package com.project.cinecatch.domain.member.entity;
 
 import com.project.cinecatch.domain.theater.entity.Theater;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "theater_subscription")
 public class TheaterSubscription {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -29,5 +32,12 @@ public class TheaterSubscription {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public static TheaterSubscription create(Member member, Theater theater) {
+        TheaterSubscription subscription = new TheaterSubscription();
+        subscription.member = member;
+        subscription.theater = theater;
+        return subscription;
     }
 }
