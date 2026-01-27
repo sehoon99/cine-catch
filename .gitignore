@@ -4,7 +4,30 @@
 
 #DB info and temp file
 .env
+.env.*
+!.env.example
+!.env.*.example
 mega.py
+
+# Local tool config
+.claude/
+
+# Firebase / Google services
+**/google-services.json
+**/firebase-service-account.json
+
+# Node / frontend artifacts
+node_modules/
+frontend/build/
+frontend/dist/
+
+# Crawler outputs
+event-crawler/data/
+event-crawler/logs/
+event-crawler/postgres_data/
+
+# Logs
+*.log
 
 # IntelliJ IDEA
 .idea/

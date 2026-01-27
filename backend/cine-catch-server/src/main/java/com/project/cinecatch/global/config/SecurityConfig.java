@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/events/**").permitAll()
                         .requestMatchers("/api/theaters/**").permitAll()
                         .requestMatchers("/api/members/signup", "/api/members/login").permitAll()
+                        .requestMatchers("/api/internal/**").permitAll()  // 내부 API (크롤러용)
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -55,7 +56,8 @@ public class SecurityConfig {
                 "http://localhost:5174",
                 "http://127.0.0.1:5174",
                 "http://localhost:3000",
-                "http://localhost:3002"
+                "http://localhost:3002",
+                "http://localhost"  // Capacitor Android app
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

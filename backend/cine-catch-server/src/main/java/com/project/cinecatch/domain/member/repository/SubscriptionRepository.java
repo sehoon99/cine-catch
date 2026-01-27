@@ -21,4 +21,7 @@ public interface SubscriptionRepository extends JpaRepository<TheaterSubscriptio
     boolean existsByMemberIdAndTheaterId(UUID memberId, String theaterId);
 
     void deleteByMemberIdAndTheaterId(UUID memberId, String theaterId);
+
+    // 특정 극장을 구독한 모든 사용자 조회 (알림 발송용)
+    List<TheaterSubscription> findByTheaterId(String theaterId);
 }

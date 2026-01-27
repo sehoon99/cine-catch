@@ -11,6 +11,17 @@ export interface TheaterResponse {
   longitude: number | null;
 }
 
+export interface SubscriptionResponse {
+  id: string;
+  theaterId: string;
+  theaterName: string;
+  brand: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  subscribedAt: string;
+}
+
 export interface EventResponse {
   eventId: string;
   movieTitle: string;
@@ -165,3 +176,23 @@ function determineEventType(goodsTitle: string): 'Goods' | 'Coupon' | 'GV' {
   }
   return 'Goods';
 }
+
+// Subscription Services
+export const subscriptionService = {
+  async getMySubscriptions(): Promise<SubscriptionResponse[]> {
+    return apiClient.get<SubscriptionResponse[]>(API_ENDPOINTS.SUBSCRIPTIONS);
+  },
+
+  async getSubscribedTheaterIds(): Promise<Set<string>> {
+    const ids = await apiClient.get<string[]>(`${API_ENDPOINTS.SUBSCRIPTIONS}/theater-ids`);
+    return new Set(ids);
+  },
+
+  async subscribe(theaterId: string): Promise<SubscriptionResponse> {
+    return apiClient.post<SubscriptionResponse>(API_ENDPOINTS.SUBSCRIPTIONS, { theaterId });
+  },
+
+  async unsubscribe(theaterId: string): Promise<void> {
+    return apiClient.delete<void>(API_ENDPOINTS.SUBSCRIPTION_BY_ID(theaterId));
+  },
+};
