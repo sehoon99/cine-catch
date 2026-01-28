@@ -2,7 +2,6 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, entity ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
