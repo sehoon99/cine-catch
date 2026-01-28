@@ -64,23 +64,25 @@ jobs:
         cd backend/cine-catch-server
         ./gradlew bootJar --no-daemon
           
-    # 2. AWS 인증 (Secrets에 저장한 키 사용)
+    # 2. AWS 인증 (main push일 때만)
     - name: Configure AWS credentials
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
-          
-    # 3. S3로 파일 복사함
+
+    # 3. S3로 파일 복사함 (main push일 때만)
     - name: Upload to S3
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
         # plain.jar 제외하고 실행 가능한 jar 파일 찾아서 업로드
         JAR_FILE=$(find backend/cine-catch-server/build/libs -name "*.jar" ! -name "*plain.jar" | head -1)
         echo "Uploading: $JAR_FILE"
         aws s3 cp "$JAR_FILE" s3://${{ secrets.S3_BUCKET_NAME }}/deploy/cine-catch.jar
 
-    # 4. EC2에 배포 (main 브랜치 push일 때만)
+    # 4. EC2에 배포 (main push일 때만)
     - name: Deploy to EC2
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: appleboy/ssh-action@v1.0.3
