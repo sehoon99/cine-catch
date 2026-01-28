@@ -29,3 +29,9 @@ variable "security_group_id" {
   description = "security_group_id"
   type        = string
 }
+
+variable "key_name" {
+  description = "EC2 Key Pair 이름 (AWS 콘솔에서 미리 생성)"
+  type        = string
+  default     = ""
+}

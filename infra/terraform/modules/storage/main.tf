@@ -1,9 +1,9 @@
 # infra/terraform/modules/storage/main.tf
 
-# 1. 서브넷 그룹 생성
+# 1. 서브넷 그룹 (기존 유지 - AWS 제한으로 변경 불가)
 resource "aws_db_subnet_group" "database" {
   name       = "${var.project_name}-db-subnet-group-v2"
-  subnet_ids = var.public_subnet_ids # Root에서 넘겨준 새 VPC의 서브넷 ID들
+  subnet_ids = var.public_subnet_ids
 
   tags = { Name = "${var.project_name}-db-subnet-group-v2" }
 }
@@ -17,7 +17,7 @@ resource "aws_security_group" "db_sg" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # 필요시 본인 IP로 제한
+    cidr_blocks = ["10.0.0.0/16"] # VPC 내부에서만 접근 가능
   }
 
   egress {
@@ -37,7 +37,7 @@ resource "aws_db_instance" "cine_catch_db" {
   db_name                = "cinecatch" # 또는 var.db_name
   username               = "cinecatch"
   password               = var.db_password # Root에서 전달받음
-  publicly_accessible    = true
+  publicly_accessible    = false
   skip_final_snapshot    = true
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   availability_zone = "ap-northeast-2a"
@@ -52,8 +52,11 @@ resource "aws_db_instance" "cine_catch_db" {
 resource "aws_s3_bucket" "cine_catch_image" {
   bucket = "cine-catch-image"
 
-  # 콘솔에서 설정한 옵션이 있다면 여기에 추가하세요.
-  # 없으면 일단 기본값으로 import한 뒤 나중에 수정 가능합니다.
+}
+
+resource "aws_s3_bucket" "cine_catch_deploy" {
+  bucket = "cine-catch-deploy"
+
 }
 
 output "db_endpoint" {

@@ -64,6 +64,40 @@ jobs:
       env:
         SPRING_PROFILES_ACTIVE: test
 
+    - name: Build bootJar
+      run: |
+        cd backend/cine-catch-server
+        ./gradlew bootJar --no-daemon
+          
+    # 2. AWS 인증 (Secrets에 저장한 키 사용)
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+          
+    # 3. S3로 파일 복사
+    - name: Upload to S3
+      run: |
+        # 빌드된 여러 jar 중 가장 최신 실행파일 하나만 골라서 S3에 'cine-catch.jar'라는 이름으로 업로드
+        aws s3 cp backend/cine-catch-server/build/libs/*.jar s3://${{ secrets.S3_BUCKET_NAME }}/deploy/cine-catch.jar --exclude "*plain.jar"
+
+    # 4. EC2에 배포 (main 브랜치 push일 때만)
+    - name: Deploy to EC2
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /home/ec2-user
+          aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/deploy/cine-catch.jar .
+          pkill -f cine-catch.jar || true
+          nohup java -jar cine-catch.jar > app.log 2>&1 &
+          sleep 5
+          echo "Deployment completed!"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4

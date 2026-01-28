@@ -50,21 +50,22 @@ module "security" {
 
 # 3. 데이터 저장소 (S3, RDS 등)
 module "storage" {
-  source       = "./modules/storage"
-  vpc_id           = module.vpc.vpc_id
+  source            = "./modules/storage"
+  vpc_id            = module.vpc.vpc_id
   public_subnet_ids = slice(module.vpc.public_subnet_ids, 0, 2)
-  db_password = var.db_password
-  project_name = var.project_name
+  private_subnet_ids = module.vpc.private_subnet_ids
+  db_password       = var.db_password
+  project_name      = var.project_name
 }
 
 # 4. 컴퓨팅 (EC2, Lambda 등)
 module "compute" {
-  source           = "./modules/compute"
-  # vpc_id           = module.vpc.vpc_id
-  db_password = var.db_password
-  public_subnet_id = module.vpc.public_subnet_ids[0]
+  source            = "./modules/compute"
+  db_password       = var.db_password
+  public_subnet_id  = module.vpc.public_subnet_ids[0]
   security_group_id = module.security.web_sg_id
-  project_name     = var.project_name
+  project_name      = var.project_name
+  key_name          = var.key_name
 }
 
 module "serverless" {

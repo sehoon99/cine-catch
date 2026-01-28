@@ -38,10 +38,27 @@ out/
 
 # Terraform 관련 제외 설정
 .terraform/
+.terraform.lock.hcl
 *.tfstate
 *.tfstate.backup
 *.tfvars
+!*.tfvars.example
 infra/terraform/.terraform/
+
+# SSH Keys / Credentials (중요!)
+*.pem
+*.key
+*_rsa
+*_ed25519
+*.ppk
+
+# Lambda 패키지
+*.zip
+
+# AWS credentials
+.aws/
+credentials
+credentials.json
 
 #
 *.properties
