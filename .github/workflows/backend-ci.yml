@@ -82,7 +82,7 @@ jobs:
         echo "Uploading: $JAR_FILE"
         aws s3 cp "$JAR_FILE" s3://${{ secrets.S3_BUCKET_NAME }}/deploy/cine-catch.jar
 
-    # 4. EC2에 배포 (main push일 때만)
+    # 4. EC2에 배포 (main push일 때만) - systemd 서비스로 관리
     - name: Deploy to EC2
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: appleboy/ssh-action@v1.0.3
@@ -91,12 +91,54 @@ jobs:
         username: ec2-user
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          set -e
+
+          # 1. S3에서 jar 다운로드
           cd /home/ec2-user
           aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/deploy/cine-catch.jar .
-          pkill -f cine-catch.jar || true
-          nohup java -jar cine-catch.jar > app.log 2>&1 &
-          sleep 5
-          echo "Deployment completed!"
+
+          # 2. systemd 서비스 파일 생성 (없으면)
+          if [ ! -f /etc/systemd/system/cine-catch.service ]; then
+            sudo tee /etc/systemd/system/cine-catch.service > /dev/null <<EOF
+          [Unit]
+          Description=Cine Catch Spring Boot Application
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=ec2-user
+          WorkingDirectory=/home/ec2-user
+          ExecStart=/usr/bin/java -jar /home/ec2-user/cine-catch.jar
+          Restart=on-failure
+          RestartSec=10
+          StandardOutput=journal
+          StandardError=journal
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+            sudo systemctl daemon-reload
+            sudo systemctl enable cine-catch
+          fi
+
+          # 3. 서비스 재시작
+          sudo systemctl restart cine-catch
+
+          # 4. 시작 확인 (최대 30초 대기)
+          for i in {1..6}; do
+            if sudo systemctl is-active --quiet cine-catch; then
+              echo "✅ Application started successfully!"
+              sudo systemctl status cine-catch --no-pager
+              exit 0
+            fi
+            echo "Waiting for application to start... ($i/6)"
+            sleep 5
+          done
+
+          # 실패 시 로그 출력
+          echo "❌ Application failed to start"
+          sudo journalctl -u cine-catch -n 50 --no-pager
+          exit 1
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
