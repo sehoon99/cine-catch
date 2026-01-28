@@ -1,5 +1,6 @@
--- 기존 제약 조건 삭제 (fk4j208mivjj6bidknfip65be50 부분은 에러 메시지에 나온 이름을 써주세요)
-ALTER TABLE events DROP CONSTRAINT fk4j208mivjj6bidknfip65be50;
+-- 기존 제약 조건 삭제 (존재하는 경우에만)
+ALTER TABLE events DROP CONSTRAINT IF EXISTS fk4j208mivjj6bidknfip65be50;
+ALTER TABLE events DROP CONSTRAINT IF EXISTS fk_movies_events;
 
 -- ON UPDATE CASCADE 옵션을 넣어 다시 생성
 ALTER TABLE events
