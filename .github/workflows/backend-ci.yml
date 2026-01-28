@@ -2,14 +2,9 @@ name: Backend CI
 
 on:
   push:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
-  # pull_request:
-  #   branches: [ main ]
-  #   paths:
-  #     - 'backend/**'
-  #     - '.github/workflows/backend-ci.yml'
+    # paths 조건 임시 제거 - 테스트용
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
