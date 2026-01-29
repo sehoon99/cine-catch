@@ -60,7 +60,7 @@ async def sync_movie_images():
 
         if not rows:
             print("✅ 모든 영화에 이미 이미지가 등록되어 있습니다.")
-            return
+            return 0
 
         print(f"📦 총 {len(rows)}개의 영화에 이미지를 등록합니다.")
 

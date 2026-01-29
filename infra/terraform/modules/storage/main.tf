@@ -17,7 +17,7 @@ resource "aws_security_group" "db_sg" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # VPC 내부에서만 접근 가능
+    cidr_blocks = ["0.0.0.0/0"] # 개발용 - 외부 접근 허용
   }
 
   egress {
@@ -37,7 +37,7 @@ resource "aws_db_instance" "cine_catch_db" {
   db_name                = "cinecatch" # 또는 var.db_name
   username               = "cinecatch"
   password               = var.db_password # Root에서 전달받음
-  publicly_accessible    = false
+  publicly_accessible    = true
   skip_final_snapshot    = true
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   availability_zone = "ap-northeast-2a"

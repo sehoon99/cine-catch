@@ -101,9 +101,9 @@ async def save_to_db():
                 #     RETURNING id
                 # """, data['movie_title'])
                 movie_title = await conn.fetchval("""
-                    INSERT INTO movies (id, title)
-                    VALUES ($1, $1)
-                    ON CONFLICT (title) 
+                    INSERT INTO movies (id, title, director, created_at)
+                    VALUES ($1, $1, '', NOW())
+                    ON CONFLICT (id)
                     DO UPDATE SET title = EXCLUDED.title
                     RETURNING id
                   """, data['movie_title'])
@@ -114,9 +114,9 @@ async def save_to_db():
                 full_event_title = f"{data['movie_title']} - {data['event_title']}"
 
                 await conn.execute("""
-                    INSERT INTO events (id, movie_title, title, start_at, end_at, created_at)
-                    VALUES ($1, $2, $3, $4, $5, NOW())
-                    ON CONFLICT (id) DO UPDATE SET 
+                    INSERT INTO events (id, movie_title, title, type, start_at, end_at, created_at)
+                    VALUES ($1, $2, $3, 'GOODS', $4, $5, NOW())
+                    ON CONFLICT (id) DO UPDATE SET
                         title = EXCLUDED.title,
                         start_at = EXCLUDED.start_at,
                         end_at = EXCLUDED.end_at
@@ -144,13 +144,26 @@ async def save_to_db():
 
                         # 상태가 변경되었거나 새로운 데이터인 경우에만 작업 수행
                         if old_status != new_status:
-                            random_id = str(uuid.uuid4())
-                            await conn.execute("""
-                                INSERT INTO event_location (theater_id, event_id, status,id, updated_at)
-                                VALUES ($1, $2, $3, $4, NOW())
-                                ON CONFLICT (theater_id, event_id) 
-                                DO UPDATE SET status = EXCLUDED.status, updated_at = NOW()
-                            """, t_id, event_no, new_status,random_id)
+                            # 기존 레코드 ID 조회
+                            existing_id = await conn.fetchval("""
+                                SELECT id FROM event_location
+                                WHERE theater_id = $1 AND event_id = $2
+                            """, t_id, event_no)
+
+                            if existing_id:
+                                # 업데이트
+                                await conn.execute("""
+                                    UPDATE event_location
+                                    SET status = $1, updated_at = NOW()
+                                    WHERE id = $2
+                                """, new_status, existing_id)
+                            else:
+                                # 신규 삽입
+                                random_id = str(uuid.uuid4())
+                                await conn.execute("""
+                                    INSERT INTO event_location (id, theater_id, event_id, status, updated_at)
+                                    VALUES ($1, $2, $3, $4, NOW())
+                                """, random_id, t_id, event_no, new_status)
                             
                             # 로그 메시지 생성 (기존 로직 유지)
                             diff_text = f"[{old_status}] → [{new_status}]" if old_status else f"[신규 등록: {new_status}]"
