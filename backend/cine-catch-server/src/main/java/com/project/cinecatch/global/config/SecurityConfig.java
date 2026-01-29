@@ -57,7 +57,8 @@ public class SecurityConfig {
                 "http://127.0.0.1:5174",
                 "http://localhost:3000",
                 "http://localhost:3002",
-                "http://localhost"  // Capacitor Android app
+                "http://localhost",  // Capacitor Android app
+                "https://cine-catch-test2.vercel.app"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
