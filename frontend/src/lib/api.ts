@@ -3,7 +3,11 @@ import { getAuthHeader } from './auth';
 
 // Android 에뮬레이터에서는 10.0.2.2로 호스트 PC에 접근
 const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+  // Production: EC2 서버 (EIP)
+  const defaultUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? 'http://3.37.114.79:8080'
+    : 'http://localhost:8080';
+  const envUrl = import.meta.env.VITE_API_BASE_URL || defaultUrl;
   const isNative = Capacitor.isNativePlatform();
   const platform = Capacitor.getPlatform();
 
