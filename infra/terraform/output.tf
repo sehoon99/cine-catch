@@ -13,10 +13,6 @@ output "db_endpoint" {
   value       = module.storage.db_endpoint
 }
 
-output "api_endpoint" {
-  value = module.serverless.api_endpoint
-}
-
 output "ssh_private_key_path" {
   description = "SSH 접속용 Private Key 경로"
   value       = module.compute.private_key_path
