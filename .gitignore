@@ -45,3 +45,6 @@ infra/terraform/.terraform/
 
 #
 *.properties
+node_modules
+.vite
+dist
