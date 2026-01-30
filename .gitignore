@@ -63,3 +63,6 @@ credentials.json
 
 #
 *.properties
+node_modules
+.vite
+dist
