@@ -4,11 +4,12 @@ import uuid
 import asyncpg
 import json
 import os
-import glob
 import urllib.error
 import urllib.request
 from datetime import datetime
 from dotenv import load_dotenv
+
+from s3_handler import load_latest_json, save_log_to_s3
 
 # 1. 환경 변수 로드 (.env 파일 읽기)
 
@@ -19,7 +20,8 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD"),
     "database": os.getenv("DB_NAME"),
     "host": os.getenv("DB_HOST"),
-    "port": int(os.getenv("DB_PORT", 5432))
+    "port": int(os.getenv("DB_PORT", 5432)),
+    "ssl": "require"
 }
 
 NOTIFICATION_API_BASE_URL = os.getenv("NOTIFICATION_API_BASE_URL", "http://localhost:8080")
@@ -67,17 +69,11 @@ async def _send_notifications(pending_notifications):
     print(f"🔔 알림 API 호출 완료: {sent_count}/{len(pending_notifications)}")
 
 async def save_to_db():
-    # --- [Step 1] 최신 JSON 파일 찾기 ---
-    list_of_files = glob.glob('data/*.json')
-    if not list_of_files:
-        print("❌ 처리할 JSON 파일이 '/data/' 폴더에 없습니다.")
+    # --- [Step 1] Load latest JSON from S3 or local ---
+    results = load_latest_json()
+    if not results:
+        print("❌ 처리할 JSON 데이터가 없습니다.")
         return
-    
-    latest_file = max(list_of_files, key=os.path.getctime)
-    print(f"📂 최신 데이터 로드 중: {latest_file}")
-
-    with open(latest_file, "r", encoding="utf-8") as f:
-        results = json.load(f)
 
     conn = await asyncpg.connect(**DB_CONFIG)
     logs = []
@@ -191,18 +187,12 @@ async def save_to_db():
 
             await _send_notifications(pending_notifications)
 
-        # --- [Step 4] 로그 파일 및 결과 출력 (기존 로직 유지) ---
-        os.makedirs("logs", exist_ok=True)
-        log_filename = f"logs/update_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        
-        with open(log_filename, "w", encoding="utf-8") as f:
-            if not logs:
-                f.write(f"[{datetime.now().strftime('%Y%m%d_%H%M%S')}] 변동 사항 없음 (기존 데이터와 동일)\n")
-                print("✨ 변동 사항이 없습니다. DB가 최신 상태입니다.")
-            else:
-                f.write("\n".join(logs) + "\n")
-                print(f"✅ 총 {change_count}건의 재고 변동을 감지하여 업데이트했습니다!")
-                print(f"📄 로그 파일 생성됨: {log_filename}")
+        # --- [Step 4] Save logs to S3 or local ---
+        save_log_to_s3(logs)
+        if not logs:
+            print("✨ 변동 사항이 없습니다. DB가 최신 상태입니다.")
+        else:
+            print(f"✅ 총 {change_count}건의 재고 변동을 감지하여 업데이트했습니다!")
 
     except Exception as e:
         print(f"❌ DB 작업 중 오류 발생: {e}")

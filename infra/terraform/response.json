@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": "{\"message\": \"Pipeline completed successfully\", \"stages_executed\": [\"crawl\"], \"result\": {\"crawl\": \"completed\"}, \"timestamp\": \"2026-01-29T09:55:49.075384\"}"}
