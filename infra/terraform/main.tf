@@ -67,10 +67,3 @@ module "compute" {
   project_name      = var.project_name
   key_name          = var.key_name
 }
-
-module "serverless" {
-  source       = "./modules/serverless"
-  project_name = var.project_name
-  environment  = var.environment
-  db_password  = var.db_password
-}
