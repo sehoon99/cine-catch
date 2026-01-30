@@ -1,7 +1,12 @@
-name: Infrastructure Deploy (Terraform)
+name: Infrastructure CI/CD (Terraform)
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'infra/terraform/**'
+  pull_request:
     branches:
       - main
     paths:
@@ -15,6 +20,9 @@ env:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     defaults:
       run:
         working-directory: infra/terraform
@@ -39,12 +47,41 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
+        id: plan
         run: terraform plan -no-color
 
+      # PR일 때 Plan 결과를 코멘트로 남김
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Plan 📖
+
+            <details><summary>Plan 결과 보기</summary>
+
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      # Apply는 main push일 때만 실행
       - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -no-color
 
       - name: Get Outputs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         id: tf-outputs
         run: |
           echo "cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
@@ -52,6 +89,7 @@ jobs:
           echo "frontend_bucket_name=$(terraform output -raw frontend_bucket_name)" >> $GITHUB_OUTPUT
 
       - name: Show Deployment Info
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           echo "========================================"
           echo "Infrastructure deployed successfully!"
