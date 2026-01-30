@@ -56,7 +56,6 @@ resource "aws_s3_bucket" "cine_catch_image" {
 
 resource "aws_s3_bucket" "cine_catch_deploy" {
   bucket = "cine-catch-deploy"
-
 }
 
 output "db_endpoint" {

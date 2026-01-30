@@ -1,3 +1,7 @@
+# =============================================================================
+# API Handler Lambda (existing)
+# =============================================================================
+
 # 1. Lambda 실행을 위한 IAM 역할
 resource "aws_iam_role" "lambda_exec" {
   name = "${var.project_name}-lambda-role"

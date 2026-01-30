@@ -72,5 +72,5 @@ module "serverless" {
   source       = "./modules/serverless"
   project_name = var.project_name
   environment  = var.environment
-  db_password = var.db_password
+  db_password  = var.db_password
 }

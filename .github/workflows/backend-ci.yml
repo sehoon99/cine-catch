@@ -86,10 +86,15 @@ jobs:
     - name: Deploy to EC2
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: appleboy/ssh-action@v1.0.3
+      env:
+        DB_URL: ${{ secrets.DB_URL }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ec2-user
         key: ${{ secrets.EC2_SSH_KEY }}
+        envs: DB_URL,DB_USER,DB_PASSWORD
         script: |
           set -e
 
@@ -97,9 +102,16 @@ jobs:
           cd /home/ec2-user
           aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/deploy/cine-catch.jar .
 
-          # 2. systemd 서비스 파일 생성 (없으면)
-          if [ ! -f /etc/systemd/system/cine-catch.service ]; then
-            sudo tee /etc/systemd/system/cine-catch.service > /dev/null <<EOF
+          # 2. 환경변수 파일 생성
+          cat > /home/ec2-user/cine-catch.env << ENVEOF
+          DB_URL=${DB_URL}
+          DB_USER=${DB_USER}
+          DB_PASSWORD=${DB_PASSWORD}
+          ENVEOF
+          chmod 600 /home/ec2-user/cine-catch.env
+
+          # 3. systemd 서비스 파일 생성/업데이트
+          sudo tee /etc/systemd/system/cine-catch.service > /dev/null << 'SVCEOF'
           [Unit]
           Description=Cine Catch Spring Boot Application
           After=network.target
@@ -108,6 +120,7 @@ jobs:
           Type=simple
           User=ec2-user
           WorkingDirectory=/home/ec2-user
+          EnvironmentFile=/home/ec2-user/cine-catch.env
           ExecStart=/usr/bin/java -jar /home/ec2-user/cine-catch.jar
           Restart=on-failure
           RestartSec=10
@@ -116,12 +129,11 @@ jobs:
 
           [Install]
           WantedBy=multi-user.target
-          EOF
-            sudo systemctl daemon-reload
-            sudo systemctl enable cine-catch
-          fi
+          SVCEOF
+          sudo systemctl daemon-reload
+          sudo systemctl enable cine-catch
 
-          # 3. 서비스 재시작
+          # 4. 서비스 재시작
           sudo systemctl restart cine-catch
 
           # 4. 시작 확인 (최대 30초 대기)

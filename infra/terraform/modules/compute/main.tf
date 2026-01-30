@@ -46,14 +46,24 @@ resource "aws_iam_role_policy" "s3_access" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["s3:GetObject", "s3:ListBucket"]
-      Resource = [
-        "arn:aws:s3:::cine-catch-deploy",
-        "arn:aws:s3:::cine-catch-deploy/*"
-      ]
-    }]
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::cine-catch-deploy",
+          "arn:aws:s3:::cine-catch-deploy/*"
+        ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::cine-catch-image",
+          "arn:aws:s3:::cine-catch-image/*"
+        ]
+      }
+    ]
   })
 }
 
@@ -65,7 +75,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
 resource "aws_instance" "app_server" {
   ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t3.micro"
+  instance_type          = "t3.small"
   subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [var.security_group_id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
@@ -74,6 +84,14 @@ resource "aws_instance" "app_server" {
   tags = { Name = "${var.project_name}-app-server" }
 }
 
-output "web_server_ip" { value = aws_instance.app_server.public_ip }
+# Elastic IP
+resource "aws_eip" "app_server" {
+  instance = aws_instance.app_server.id
+  domain   = "vpc"
+
+  tags = { Name = "${var.project_name}-eip" }
+}
+
+output "web_server_ip" { value = aws_eip.app_server.public_ip }
 output "private_key_path" { value = local_file.private_key.filename }
 output "key_name" { value = aws_key_pair.ec2_key.key_name }

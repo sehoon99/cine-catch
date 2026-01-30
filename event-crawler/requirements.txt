@@ -1,0 +1,6 @@
+playwright
+asyncpg
+python-dotenv
+aiohttp
+boto3
+certifi
