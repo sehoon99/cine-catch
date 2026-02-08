@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, MapPin, Heart } from 'lucide-react';
+import { Search, Heart } from 'lucide-react';
 import { type MovieEvent } from '../lib/mockData';
 import { useEvents } from '../lib/hooks';
 import { Badge } from './ui/badge';
@@ -170,10 +170,6 @@ function EventCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{event.distance} km away</span>
-          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar } from 'lucide-react';
 import { useEvent } from '../lib/hooks';
 import { Badge } from './ui/badge';
 
@@ -85,21 +85,6 @@ export function EventDetailScreen({ eventId, onBack }: EventDetailScreenProps) {
                 </div>
               </div>
               
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Time</p>
-                  <p>{event.time}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Nearest Location</p>
-                  <p>{event.distance} km away</p>
-                </div>
-              </div>
             </div>
           </div>
 
