@@ -141,6 +141,10 @@ export const API_ENDPOINTS = {
   SUBSCRIPTIONS: '/api/subscriptions',
   SUBSCRIPTION_BY_ID: (id: string | number) => `/api/subscriptions/${id}`,
 
+  // Favorite endpoints
+  FAVORITE_EVENT_IDS: '/api/favorites/event-ids',
+  FAVORITE_BY_EVENT_ID: (id: string | number) => `/api/favorites/${id}`,
+
   // User endpoints
   USERS: '/api/users',
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,

@@ -196,3 +196,19 @@ export const subscriptionService = {
     return apiClient.delete<void>(API_ENDPOINTS.SUBSCRIPTION_BY_ID(theaterId));
   },
 };
+
+// Favorite Services
+export const favoriteService = {
+  async getFavoriteEventIds(): Promise<Set<string>> {
+    const ids = await apiClient.get<string[]>(API_ENDPOINTS.FAVORITE_EVENT_IDS);
+    return new Set(ids);
+  },
+
+  async addFavorite(eventId: string): Promise<void> {
+    return apiClient.post<void>(API_ENDPOINTS.FAVORITE_BY_EVENT_ID(eventId), {});
+  },
+
+  async removeFavorite(eventId: string): Promise<void> {
+    return apiClient.delete<void>(API_ENDPOINTS.FAVORITE_BY_EVENT_ID(eventId));
+  },
+};
