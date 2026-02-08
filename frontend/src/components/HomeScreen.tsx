@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Heart } from 'lucide-react';
 import { type MovieEvent } from '../lib/mockData';
 import { useEvents } from '../lib/hooks';
+import { favoriteService } from '../lib/services';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 
@@ -18,23 +19,48 @@ export function HomeScreen({ onEventClick }: HomeScreenProps) {
 
   const { events, loading, error } = useEvents();
 
-  const toggleFavorite = (eventId: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(eventId)) {
-      newFavorites.delete(eventId);
-      toast.info('Removed from favorites');
-    } else {
-      newFavorites.add(eventId);
-      toast.success('Added to favorites');
+  const fetchFavorites = useCallback(async () => {
+    try {
+      const ids = await favoriteService.getFavoriteEventIds();
+      setFavorites(ids);
+    } catch {
+      // 미로그인 등 에러 무시
     }
-    setFavorites(newFavorites);
+  }, []);
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
+
+  const toggleFavorite = async (eventId: string) => {
+    const newFavorites = new Set(favorites);
+    try {
+      if (newFavorites.has(eventId)) {
+        await favoriteService.removeFavorite(eventId);
+        newFavorites.delete(eventId);
+        toast.info('찜 해제');
+      } else {
+        await favoriteService.addFavorite(eventId);
+        newFavorites.add(eventId);
+        toast.success('찜 추가');
+      }
+      setFavorites(newFavorites);
+    } catch {
+      toast.error('오류가 발생했습니다');
+    }
   };
 
-  const filteredEvents = events.filter((event) => {
-    const matchesFilter = activeFilter === 'All' || event.type === activeFilter;
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const filteredEvents = events
+    .filter((event) => {
+      const matchesFilter = activeFilter === 'All' || event.type === activeFilter;
+      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) => {
+      const aFav = favorites.has(a.id) ? 0 : 1;
+      const bFav = favorites.has(b.id) ? 0 : 1;
+      return aFav - bFav;
+    });
 
   if (loading) {
     return (
