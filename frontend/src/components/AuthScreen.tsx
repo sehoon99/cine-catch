@@ -68,8 +68,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
       const state: AuthState = { ...token, email: signupEmail };
       setAuthState(state);
-      onAuthSuccess(state);
-      toast.success('회원가입 완료');
+      window.location.reload();
     } catch (error) {
       const message = error instanceof Error ? error.message : '회원가입에 실패했습니다.';
       toast.error('회원가입 실패', { description: message });

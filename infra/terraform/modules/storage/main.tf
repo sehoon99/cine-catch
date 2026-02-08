@@ -92,6 +92,20 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
   signing_protocol                  = "sigv4"
 }
 
+# CloudFront Function: API 요청에서 Origin 헤더 제거 (Spring Security CORS 403 방지)
+resource "aws_cloudfront_function" "strip_origin" {
+  name    = "${var.project_name}-strip-origin"
+  runtime = "cloudfront-js-2.0"
+  code    = <<-EOF
+    function handler(event) {
+      var request = event.request;
+      delete request.headers['origin'];
+      delete request.headers['referer'];
+      return request;
+    }
+  EOF
+}
+
 # CloudFront 배포
 resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
@@ -103,6 +117,44 @@ resource "aws_cloudfront_distribution" "frontend" {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id                = "S3-${aws_s3_bucket.frontend.id}"
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
+  }
+
+  origin {
+    domain_name = "ec2-${replace(var.ec2_public_ip, ".", "-")}.ap-northeast-2.compute.amazonaws.com"
+    origin_id   = "EC2-backend"
+
+    custom_origin_config {
+      http_port              = 8080
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  # API 요청을 EC2 백엔드로 프록시
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "EC2-backend"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Content-Type", "Accept"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.strip_origin.arn
+    }
   }
 
   default_cache_behavior {
@@ -124,18 +176,6 @@ resource "aws_cloudfront_distribution" "frontend" {
     compress               = true
   }
 
-  # SPA 라우팅을 위한 에러 페이지 설정
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
 
   restrictions {
     geo_restriction {
