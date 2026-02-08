@@ -42,7 +42,7 @@ export const mockEvents: MovieEvent[] = [
     distance: 1.2,
     available: true,
     description: 'Join us for an exclusive screening of The Quantum Paradox with a special Q&A session with the director.',
-    date: 'Jan 18, 2026',
+    date: 'Feb 14, 2026',
     time: '7:00 PM',
     theaters: [
       {
@@ -85,7 +85,7 @@ export const mockEvents: MovieEvent[] = [
     distance: 0.8,
     available: true,
     description: 'Get 50% off tickets for the horror thriller Midnight Shadows. Limited seats available.',
-    date: 'Jan 20, 2026',
+    date: 'Feb 21, 2026',
     time: '9:30 PM',
     theaters: [
       {
@@ -118,7 +118,7 @@ export const mockEvents: MovieEvent[] = [
     distance: 2.3,
     available: false,
     description: 'Purchase exclusive Summer Blockbuster merchandise bundles. Includes poster, t-shirt, and collectible cup.',
-    date: 'Jan 15, 2026',
+    date: 'Mar 7, 2026',
     time: 'All Day',
     theaters: [
       {
@@ -141,7 +141,7 @@ export const mockEvents: MovieEvent[] = [
     distance: 1.5,
     available: true,
     description: 'Experience classic films on the big screen every Thursday night.',
-    date: 'Jan 16, 2026',
+    date: 'Feb 12, 2026',
     time: '8:00 PM',
     theaters: [
       {
