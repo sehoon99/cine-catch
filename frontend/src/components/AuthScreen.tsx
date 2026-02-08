@@ -92,14 +92,16 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             onValueChange={value => setActiveTab(value as 'login' | 'signup')}
             className="space-y-6"
           >
-            <TabsList className="grid w-full grid-cols-2 rounded-full bg-white/5 p-1">
-              <TabsTrigger value="login" className="rounded-full">
-                로그인
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-full">
-                회원가입
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex justify-center">
+              <TabsList style={{ background: 'transparent', border: 'none', padding: 0, height: 'auto', display: 'inline-flex', gap: '30px' }}>
+                <TabsTrigger value="login" style={{ background: 'white', border: 'none', color: 'rgba(0,0,0,0.7)', padding: '8px 20px', borderRadius: '14px', fontSize: '14px', fontWeight: 500 }} className="data-[state=active]:!bg-white data-[state=active]:!text-black">
+                  로그인
+                </TabsTrigger>
+                <TabsTrigger value="signup" style={{ background: 'white', border: 'none', color: 'rgba(0,0,0,0.7)', padding: '8px 20px', borderRadius: '14px', fontSize: '14px', fontWeight: 500 }} className="data-[state=active]:!bg-white data-[state=active]:!text-black">
+                  회원가입
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="login">
               <form

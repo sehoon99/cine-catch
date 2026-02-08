@@ -55,7 +55,7 @@ export function SettingsScreen({ authEmail, onLogout }: SettingsScreenProps) {
 
   return (
     <div className="p-4">
-      <h1 className="mb-6">Settings</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>Settings</h1>
       
       <div className="space-y-4">
         <div className="bg-card rounded-2xl p-4 space-y-3">

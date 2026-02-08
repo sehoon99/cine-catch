@@ -78,7 +78,7 @@ export function TheatersScreen({ onTheaterClick }: TheatersScreenProps) {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 pb-2">
-        <h1 className="mb-4">Nearby Theaters</h1>
+        <h1 className="mb-4 text-2xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>Nearby Theaters</h1>
 
         {/* View Toggle */}
         <div className="flex gap-2 mb-4">

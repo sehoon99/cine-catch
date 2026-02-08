@@ -56,7 +56,7 @@ export function HomeScreen({ onEventClick }: HomeScreenProps) {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 pb-2">
-        <h1 className="mb-4">Cine-Catch</h1>
+        <h1 className="mb-4 text-2xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>Cine-Catch</h1>
         
         {/* Search Bar */}
         <div className="relative mb-4">

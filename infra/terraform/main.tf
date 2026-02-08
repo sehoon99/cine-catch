@@ -57,6 +57,12 @@ module "storage" {
   db_password        = var.db_password
   project_name       = var.project_name
   ec2_public_ip      = module.compute.web_server_ip
+  domain_name        = "cine-catch.com"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 
 # 4. 컴퓨팅 (EC2, Lambda 등)
