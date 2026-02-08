@@ -26,3 +26,8 @@ variable "vpc_id" {}
 variable "public_subnet_ids" {}
 
 variable "private_subnet_ids" {}
+
+variable "ec2_public_ip" {
+  description = "EC2 backend server public IP (Elastic IP)"
+  type        = string
+}

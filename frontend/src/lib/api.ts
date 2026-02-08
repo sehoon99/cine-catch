@@ -3,26 +3,23 @@ import { getAuthHeader } from './auth';
 
 // Android 에뮬레이터에서는 10.0.2.2로 호스트 PC에 접근
 const getApiBaseUrl = () => {
-  // Production: EC2 서버 (EIP)
-  const defaultUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    ? 'http://3.37.114.79:8080'
-    : 'http://localhost:8080';
-  const envUrl = import.meta.env.VITE_API_BASE_URL || defaultUrl;
   const isNative = Capacitor.isNativePlatform();
   const platform = Capacitor.getPlatform();
 
-  console.log('[API] Environment URL:', envUrl);
-  console.log('[API] Is Native Platform:', isNative);
-  console.log('[API] Platform:', platform);
-
-  if (isNative && platform === 'android') {
-    const androidUrl = envUrl.replace('localhost', '10.0.2.2');
-    console.log('[API] Using Android URL:', androidUrl);
-    return androidUrl;
+  // Production (CloudFront): 상대 경로 사용 (/api/* → EC2 origin)
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl === undefined || envUrl === '') {
+    return '';
   }
 
-  console.log('[API] Using URL:', envUrl);
-  return envUrl;
+  // Development / Native
+  const baseUrl = envUrl || 'http://localhost:8080';
+
+  if (isNative && platform === 'android') {
+    return baseUrl.replace('localhost', '10.0.2.2');
+  }
+
+  return baseUrl;
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -70,11 +67,12 @@ class ApiClient {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        return await response.json();
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text as T;
       }
-      return (await response.text()) as T;
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error) {
