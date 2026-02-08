@@ -132,7 +132,7 @@ export function SubscriptionsScreen() {
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 pb-2">
-        <h1 className="mb-4">Subscriptions</h1>
+        <h1 className="mb-4 text-2xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>Subscriptions</h1>
 
         <div className="bg-card rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between">
