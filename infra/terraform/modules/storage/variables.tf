@@ -31,3 +31,9 @@ variable "ec2_public_ip" {
   description = "EC2 backend server public IP (Elastic IP)"
   type        = string
 }
+
+variable "domain_name" {
+  description = "커스텀 도메인 이름"
+  type        = string
+  default     = "cine-catch.com"
+}

@@ -1,5 +1,51 @@
 # infra/terraform/modules/storage/main.tf
 
+# ===== Route 53 + ACM (커스텀 도메인) =====
+
+# Route 53 Hosted Zone
+resource "aws_route53_zone" "main" {
+  name = var.domain_name
+}
+
+# ACM 인증서 (CloudFront용 - us-east-1 필수)
+resource "aws_acm_certificate" "frontend" {
+  provider                  = aws.us_east_1
+  domain_name               = var.domain_name
+  subject_alternative_names = ["*.${var.domain_name}"]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ACM DNS 검증 레코드
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.frontend.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = aws_route53_zone.main.zone_id
+}
+
+# ACM 인증서 검증 완료 대기
+resource "aws_acm_certificate_validation" "frontend" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.frontend.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# ===== 기존 리소스 =====
+
 # 1. 서브넷 그룹 (기존 유지 - AWS 제한으로 변경 불가)
 resource "aws_db_subnet_group" "database" {
   name       = "${var.project_name}-db-subnet-group-v2"
@@ -112,6 +158,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   price_class         = "PriceClass_200"
+  aliases             = [var.domain_name, "www.${var.domain_name}"]
 
   origin {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
@@ -184,7 +231,9 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.frontend.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   tags = {
@@ -217,6 +266,34 @@ resource "aws_s3_bucket_policy" "frontend" {
   })
 }
 
+# ===== Route 53 DNS 레코드 (CloudFront 연결) =====
+
+# cine-catch.com → CloudFront
+resource "aws_route53_record" "root" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.frontend.domain_name
+    zone_id                = aws_cloudfront_distribution.frontend.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# www.cine-catch.com → CloudFront
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "www.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.frontend.domain_name
+    zone_id                = aws_cloudfront_distribution.frontend.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
 output "db_endpoint" {
   value = aws_db_instance.cine_catch_db.endpoint
 }
@@ -231,4 +308,8 @@ output "cloudfront_distribution_id" {
 
 output "cloudfront_domain_name" {
   value = aws_cloudfront_distribution.frontend.domain_name
+}
+
+output "website_url" {
+  value = "https://${var.domain_name}"
 }

@@ -37,3 +37,8 @@ output "cloudfront_domain_name" {
   description = "CloudFront 도메인 (웹사이트 URL)"
   value       = "https://${module.storage.cloudfront_domain_name}"
 }
+
+output "website_url" {
+  description = "커스텀 도메인 웹사이트 URL"
+  value       = module.storage.website_url
+}
