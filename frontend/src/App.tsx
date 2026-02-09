@@ -28,6 +28,10 @@ export default function App() {
   const [selectedTheater, setSelectedTheater] = useState<TheaterInfo | null>(null);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [authState, setAuthState] = useState<AuthState | null>(() => getAuthState());
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('cinecatch_darkmode');
+    return saved !== null ? saved === 'true' : true;
+  });
   const isAuthenticated = isAuthValid(authState);
 
   useEffect(() => {
@@ -107,7 +111,7 @@ export default function App() {
   };
 
   return (
-    <div className="dark min-h-screen">
+    <div className={`${darkMode ? 'dark' : ''} min-h-screen`}>
       <div className="flex flex-col h-screen max-w-md mx-auto bg-background text-foreground relative">
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto pb-20">
@@ -121,6 +125,11 @@ export default function App() {
               {currentScreen === 'settings' && (
                 <SettingsScreen
                   authEmail={authState?.email}
+                  darkMode={darkMode}
+                  onDarkModeChange={(checked) => {
+                    setDarkMode(checked);
+                    localStorage.setItem('cinecatch_darkmode', String(checked));
+                  }}
                   onLogout={() => {
                     clearAuthState();
                     setAuthState(null);
