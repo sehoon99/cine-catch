@@ -6,10 +6,12 @@ import { Switch } from './ui/switch';
 
 type SettingsScreenProps = {
   authEmail?: string;
+  darkMode: boolean;
+  onDarkModeChange: (checked: boolean) => void;
   onLogout?: () => void;
 };
 
-export function SettingsScreen({ authEmail, onLogout }: SettingsScreenProps) {
+export function SettingsScreen({ authEmail, darkMode, onDarkModeChange, onLogout }: SettingsScreenProps) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [isCheckingPermission, setIsCheckingPermission] = useState(true);
 
@@ -99,7 +101,7 @@ export function SettingsScreen({ authEmail, onLogout }: SettingsScreenProps) {
               <h3>Dark Mode</h3>
               <p className="text-sm text-muted-foreground">Always use dark theme</p>
             </div>
-            <Switch defaultChecked />
+            <Switch checked={darkMode} onCheckedChange={onDarkModeChange} />
           </div>
         </div>
 
@@ -107,7 +109,7 @@ export function SettingsScreen({ authEmail, onLogout }: SettingsScreenProps) {
           <h3>About</h3>
           <p className="text-sm text-muted-foreground">Version 1.0.0</p>
           <p className="text-sm text-muted-foreground">
-            Cine-Catch helps you discover movie theater events near you.
+            영화관의 모든 굿즈 이벤트를 놓치지 않고 확인하세요.
           </p>
         </div>
       </div>
