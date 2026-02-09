@@ -27,6 +27,8 @@ export interface EventResponse {
   movieTitle: string;
   goodsTitle: string;
   imageUrl: string | null;
+  startAt: string | null;
+  endAt: string | null;
   theaters: TheaterInventoryResponse[];
 }
 
@@ -141,8 +143,8 @@ function mapEventResponseToMovieEvent(response: EventResponse): MovieEvent {
     available: hasAvailableTheater,
     theaters: response.theaters.map(t => mapTheaterInventoryToTheaterAvailability(t)),
     description: response.goodsTitle,
-    date: 'Available now', // Backend doesn't provide dates yet
-    time: 'Check theater for times',
+    date: formatEventDate(response.startAt, response.endAt),
+    time: formatEventTime(response.startAt),
   };
 }
 
@@ -163,6 +165,20 @@ function mapTheaterInventoryToTheaterAvailability(
     lat: 0,
     lng: 0,
   };
+}
+
+function formatEventDate(startAt: string | null, endAt: string | null): string {
+  if (!startAt || !endAt) return '날짜 미정';
+  const start = new Date(startAt);
+  const end = new Date(endAt);
+  const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+  return `${fmt(start)} ~ ${fmt(end)}`;
+}
+
+function formatEventTime(startAt: string | null): string {
+  if (!startAt) return '';
+  const d = new Date(startAt);
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} 시작`;
 }
 
 function determineEventType(goodsTitle: string): 'Goods' | 'Coupon' | 'GV' {
