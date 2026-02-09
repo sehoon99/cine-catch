@@ -44,7 +44,11 @@ export interface TheaterEventResponse {
 }
 
 export interface TheaterInventoryResponse {
+  theaterId: string | null;
   theaterName: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   status: string;
 }
 
@@ -156,14 +160,14 @@ function mapTheaterInventoryToTheaterAvailability(
                       !inventory.status.includes('마감');
 
   return {
-    theaterId: '', // Not provided by backend
+    theaterId: inventory.theaterId || '',
     theaterName: inventory.theaterName,
-    brand: '', // Not provided by backend
-    address: '', // Not provided by backend
-    distance: 0, // Not provided by backend
+    brand: '',
+    address: inventory.address || '',
+    distance: 0,
     available: isAvailable,
-    lat: 0,
-    lng: 0,
+    lat: inventory.latitude || 0,
+    lng: inventory.longitude || 0,
   };
 }
 

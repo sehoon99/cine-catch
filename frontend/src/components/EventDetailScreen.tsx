@@ -1,6 +1,18 @@
+import { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Calendar } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 import { useEvent } from '../lib/hooks';
 import { Badge } from './ui/badge';
+
+function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 interface EventDetailScreenProps {
   eventId: string;
@@ -9,6 +21,13 @@ interface EventDetailScreenProps {
 
 export function EventDetailScreen({ eventId, onBack }: EventDetailScreenProps) {
   const { event, loading, error } = useEvent(eventId);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    Geolocation.getCurrentPosition().then(pos => {
+      setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+    }).catch(() => {});
+  }, []);
 
   if (loading) {
     return (
@@ -110,7 +129,11 @@ export function EventDetailScreen({ eventId, onBack }: EventDetailScreenProps) {
                     </p>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4" />
-                      <span>{theater.distance} km</span>
+                      <span>
+                        {userLocation && theater.lat && theater.lng
+                          ? `${getDistanceKm(userLocation.lat, userLocation.lng, theater.lat, theater.lng).toFixed(1)} km`
+                          : '위치 정보 없음'}
+                      </span>
                     </div>
                   </div>
                   

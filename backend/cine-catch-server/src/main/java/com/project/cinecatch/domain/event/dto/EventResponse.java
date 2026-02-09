@@ -30,7 +30,11 @@ public class EventResponse {
     @Builder
     @AllArgsConstructor
     public static class TheaterInventory {
+        private String theaterId;
         private String theaterName;
+        private String address;
+        private Double latitude;
+        private Double longitude;
         private String status;
     }
 
@@ -39,7 +43,11 @@ public class EventResponse {
 
         List<TheaterInventory> theaterList = locations.stream()
                 .map(loc -> TheaterInventory.builder()
+                        .theaterId(loc.getTheater().getId())
                         .theaterName(loc.getTheater().getName())
+                        .address(loc.getTheater().getAddress())
+                        .latitude(loc.getTheater().getLocation() != null ? loc.getTheater().getLocation().getY() : null)
+                        .longitude(loc.getTheater().getLocation() != null ? loc.getTheater().getLocation().getX() : null)
                         .status(loc.getStatus())
                         .build())
                 .collect(Collectors.toList());
