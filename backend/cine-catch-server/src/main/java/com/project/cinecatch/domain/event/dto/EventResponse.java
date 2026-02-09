@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,8 @@ public class EventResponse {
     private String movieTitle;
     private String goodsTitle;
     private String imageUrl;
+    private LocalDateTime startAt;
+    private LocalDateTime endAt;
 
     private List<TheaterInventory> theaters;
 
@@ -46,6 +49,8 @@ public class EventResponse {
                 .movieTitle(event.getMovie().getTitle())
                 .goodsTitle(event.getTitle())
                 .imageUrl(event.getMovie().getImage())
+                .startAt(event.getStartAt())
+                .endAt(event.getEndAt())
                 .theaters(theaterList)
                 .build();
     }
