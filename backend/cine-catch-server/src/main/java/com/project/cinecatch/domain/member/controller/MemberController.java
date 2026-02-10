@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
@@ -41,5 +43,28 @@ public class MemberController {
     ) {
         memberService.updateFcmToken(email, request.getFcmToken());
         return ResponseEntity.ok("FCM 토큰이 저장되었습니다.");
+    }
+
+    // 4. 알림 설정 조회
+    @GetMapping("/notification-settings")
+    public ResponseEntity<Map<String, Boolean>> getNotificationSettings(
+            @AuthenticationPrincipal String email
+    ) {
+        boolean enabled = memberService.getNotificationEnabled(email);
+        return ResponseEntity.ok(Map.of("enabled", enabled));
+    }
+
+    // 5. 알림 설정 변경
+    @PutMapping("/notification-settings")
+    public ResponseEntity<String> updateNotificationSettings(
+            @AuthenticationPrincipal String email,
+            @RequestBody Map<String, Boolean> request
+    ) {
+        Boolean enabled = request.get("enabled");
+        if (enabled == null) {
+            return ResponseEntity.badRequest().body("enabled 필드는 필수입니다.");
+        }
+        memberService.updateNotificationEnabled(email, enabled);
+        return ResponseEntity.ok("알림 설정이 변경되었습니다.");
     }
 }

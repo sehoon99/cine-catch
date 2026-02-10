@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { theaterService, eventService, subscriptionService, SubscriptionResponse } from './services';
+import { theaterService, eventService, subscriptionService, notificationHistoryService, SubscriptionResponse, NotificationHistoryResponse } from './services';
 import { MovieEvent, Theater } from './mockData';
 
 // Use mock data flag - set to false to use real API
@@ -333,5 +333,65 @@ export function useSubscriptions() {
     subscribe,
     unsubscribe,
     refetch: fetchSubscriptions,
+  };
+}
+
+export function useNotifications() {
+  const [notifications, setNotifications] = useState<NotificationHistoryResponse[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [data, count] = await Promise.all([
+        notificationHistoryService.getNotifications(),
+        notificationHistoryService.getUnreadCount(),
+      ]);
+      setNotifications(data);
+      setUnreadCount(count);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch notifications');
+      console.error('Error fetching notifications:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await notificationHistoryService.markAsRead(id);
+      setNotifications(prev =>
+        prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  }, []);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const count = await notificationHistoryService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (err) {
+      console.error('Error fetching unread count:', err);
+    }
+  }, []);
+
+  return {
+    notifications,
+    unreadCount,
+    loading,
+    error,
+    markAsRead,
+    refetch: fetchNotifications,
+    fetchUnreadCount,
   };
 }

@@ -117,7 +117,13 @@ export function EventDetailScreen({ eventId, onBack }: EventDetailScreenProps) {
           <div className="bg-card rounded-2xl p-4">
             <h3 className="mb-3">Available Theaters</h3>
             <div className="space-y-3">
-              {event.theaters.map((theater) => (
+              {[...event.theaters]
+                .sort((a, b) => {
+                  if (!userLocation || !a.lat || !a.lng || !b.lat || !b.lng) return 0;
+                  return getDistanceKm(userLocation.lat, userLocation.lng, a.lat, a.lng)
+                       - getDistanceKm(userLocation.lat, userLocation.lng, b.lat, b.lng);
+                })
+                .map((theater) => (
                 <div
                   key={theater.theaterId}
                   className="flex items-start justify-between gap-4 pb-3 last:pb-0 border-b border-border last:border-0"

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,4 +19,6 @@ public interface EventFavoriteRepository extends JpaRepository<EventSubscription
     boolean existsByMemberIdAndEventId(UUID memberId, String eventId);
 
     void deleteByMemberIdAndEventId(UUID memberId, String eventId);
+
+    List<EventSubscription> findByEventId(String eventId);
 }

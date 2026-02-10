@@ -59,4 +59,25 @@ public class MemberService {
         member.updateFcmToken(fcmToken);
         memberRepository.save(member);
     }
+
+    /**
+     * 알림 설정 변경
+     */
+    public void updateNotificationEnabled(String email, boolean enabled) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("회원을 찾을 수 없습니다."));
+
+        member.updateNotificationEnabled(enabled);
+        memberRepository.save(member);
+    }
+
+    /**
+     * 알림 설정 조회
+     */
+    public boolean getNotificationEnabled(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("회원을 찾을 수 없습니다."));
+
+        return member.isNotificationEnabled();
+    }
 }
