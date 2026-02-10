@@ -153,6 +153,12 @@ export const API_ENDPOINTS = {
   MEMBERS_SIGNUP: '/api/members/signup',
   MEMBERS_LOGIN: '/api/members/login',
   MEMBERS_FCM_TOKEN: '/api/members/fcm-token',
+  MEMBERS_NOTIFICATION_SETTINGS: '/api/members/notification-settings',
+
+  // Notification endpoints
+  NOTIFICATIONS: '/api/notifications',
+  NOTIFICATION_READ: (id: string) => `/api/notifications/${id}/read`,
+  NOTIFICATIONS_UNREAD_COUNT: '/api/notifications/unread-count',
 
   // Health check
   HEALTH: '/health',

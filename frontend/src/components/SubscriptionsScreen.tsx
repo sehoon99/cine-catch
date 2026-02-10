@@ -4,7 +4,7 @@ import { Switch } from './ui/switch';
 import { toast } from 'sonner';
 import { useSubscriptions, useNearbyTheaters } from '../lib/hooks';
 import { getAuthState, isAuthValid } from '../lib/auth';
-import { SubscriptionResponse } from '../lib/services';
+import { SubscriptionResponse, notificationSettingsService } from '../lib/services';
 import type { Theater } from '../lib/mockData';
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -40,7 +40,14 @@ export function SubscriptionsScreen() {
 
   useEffect(() => {
     const authState = getAuthState();
-    setIsLoggedIn(isAuthValid(authState));
+    const loggedIn = isAuthValid(authState);
+    setIsLoggedIn(loggedIn);
+
+    if (loggedIn) {
+      notificationSettingsService.get()
+        .then(enabled => setNotificationsEnabled(enabled))
+        .catch(err => console.error('Failed to load notification settings:', err));
+    }
   }, []);
 
   useEffect(() => {
@@ -106,12 +113,18 @@ export function SubscriptionsScreen() {
     }
   };
 
-  const handleNotificationToggle = (checked: boolean) => {
+  const handleNotificationToggle = async (checked: boolean) => {
     setNotificationsEnabled(checked);
-    if (checked) {
-      toast.success('Notifications enabled');
-    } else {
-      toast.info('Notifications disabled');
+    try {
+      await notificationSettingsService.update(checked);
+      if (checked) {
+        toast.success('Notifications enabled');
+      } else {
+        toast.info('Notifications disabled');
+      }
+    } catch {
+      setNotificationsEnabled(!checked);
+      toast.error('Failed to update notification settings');
     }
   };
 

@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Home, Map, Bell, Settings, MapPin } from 'lucide-react';
+import { Home, Map, Bell, Settings, MapPin, Heart } from 'lucide-react';
 import { HomeScreen } from './components/HomeScreen';
 import { TheatersScreen } from './components/TheatersScreen';
 import { TheaterDetailScreen } from './components/TheaterDetailScreen';
 import { EventDetailScreen } from './components/EventDetailScreen';
 import { SubscriptionsScreen } from './components/SubscriptionsScreen';
+import { NotificationsScreen } from './components/NotificationsScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { AuthScreen } from './components/AuthScreen';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
 import { clearAuthState, getAuthState, isAuthValid, type AuthState } from './lib/auth';
 import { pushNotificationService } from './lib/pushNotificationService';
+import { notificationHistoryService } from './lib/services';
 
-type Screen = 'home' | 'theaters' | 'subscriptions' | 'settings' | 'event-detail' | 'theater-detail';
+type Screen = 'home' | 'theaters' | 'subscriptions' | 'notifications' | 'settings' | 'event-detail' | 'theater-detail';
 
 interface TheaterInfo {
   id: string;
@@ -32,6 +34,7 @@ export default function App() {
     const saved = localStorage.getItem('cinecatch_darkmode');
     return saved !== null ? saved === 'true' : true;
   });
+  const [unreadCount, setUnreadCount] = useState(0);
   const isAuthenticated = isAuthValid(authState);
 
   useEffect(() => {
@@ -78,6 +81,24 @@ export default function App() {
     };
   }, [isAuthenticated]);
 
+  // 읽지 않은 알림 수 조회
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await notificationHistoryService.getUnreadCount();
+        setUnreadCount(count);
+      } catch (err) {
+        console.error('[App] 읽지 않은 알림 수 조회 실패:', err);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const navigateToEventDetail = (eventId: string) => {
     setSelectedEventId(eventId);
     setCurrentScreen('event-detail');
@@ -92,6 +113,8 @@ export default function App() {
     if (currentScreen === 'theater-detail') {
       setCurrentScreen('theaters');
       setSelectedTheater(null);
+    } else if (currentScreen === 'notifications') {
+      setCurrentScreen('home');
     } else {
       setCurrentScreen('home');
       setSelectedEventId(null);
@@ -122,6 +145,9 @@ export default function App() {
               {currentScreen === 'home' && <HomeScreen onEventClick={navigateToEventDetail} />}
               {currentScreen === 'theaters' && <TheatersScreen onTheaterClick={navigateToTheaterDetail} />}
               {currentScreen === 'subscriptions' && <SubscriptionsScreen />}
+              {currentScreen === 'notifications' && (
+                <NotificationsScreen onBack={navigateBack} />
+              )}
               {currentScreen === 'settings' && (
                 <SettingsScreen
                   authEmail={authState?.email}
@@ -150,7 +176,8 @@ export default function App() {
         {/* Floating Action Button for Location */}
         {isAuthenticated &&
           currentScreen !== 'event-detail' &&
-          currentScreen !== 'theater-detail' && (
+          currentScreen !== 'theater-detail' &&
+          currentScreen !== 'notifications' && (
           <button
             onClick={updateLocation}
             disabled={isUpdatingLocation}
@@ -166,7 +193,8 @@ export default function App() {
         {/* Bottom Navigation Bar */}
         {isAuthenticated &&
           currentScreen !== 'event-detail' &&
-          currentScreen !== 'theater-detail' && (
+          currentScreen !== 'theater-detail' &&
+          currentScreen !== 'notifications' && (
           <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto">
             <div className="flex justify-around items-center h-16 px-2">
               <NavButton
@@ -182,10 +210,27 @@ export default function App() {
                 onClick={() => setCurrentScreen('theaters')}
               />
               <NavButton
-                icon={<Bell className="w-6 h-6" />}
+                icon={<Heart className="w-6 h-6" />}
                 label="Subscriptions"
                 active={currentScreen === 'subscriptions'}
                 onClick={() => setCurrentScreen('subscriptions')}
+              />
+              <NavButton
+                icon={
+                  <div className="relative">
+                    <Bell className="w-6 h-6" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                }
+                label="Notifications"
+                active={currentScreen === 'notifications'}
+                onClick={() => {
+                  setCurrentScreen('notifications');
+                }}
               />
               <NavButton
                 icon={<Settings className="w-6 h-6" />}

@@ -217,6 +217,42 @@ export const subscriptionService = {
   },
 };
 
+// Notification Settings Service
+export const notificationSettingsService = {
+  async get(): Promise<boolean> {
+    const response = await apiClient.get<{ enabled: boolean }>(API_ENDPOINTS.MEMBERS_NOTIFICATION_SETTINGS);
+    return response.enabled;
+  },
+
+  async update(enabled: boolean): Promise<void> {
+    await apiClient.put<string>(API_ENDPOINTS.MEMBERS_NOTIFICATION_SETTINGS, { enabled });
+  },
+};
+
+// Notification History Service
+export interface NotificationHistoryResponse {
+  id: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export const notificationHistoryService = {
+  async getNotifications(): Promise<NotificationHistoryResponse[]> {
+    return apiClient.get<NotificationHistoryResponse[]>(API_ENDPOINTS.NOTIFICATIONS);
+  },
+
+  async markAsRead(id: string): Promise<void> {
+    await apiClient.put<string>(API_ENDPOINTS.NOTIFICATION_READ(id));
+  },
+
+  async getUnreadCount(): Promise<number> {
+    const response = await apiClient.get<{ count: number }>(API_ENDPOINTS.NOTIFICATIONS_UNREAD_COUNT);
+    return response.count;
+  },
+};
+
 // Favorite Services
 export const favoriteService = {
   async getFavoriteEventIds(): Promise<Set<string>> {

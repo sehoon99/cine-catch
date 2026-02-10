@@ -60,6 +60,28 @@ public class NotificationController {
         ));
     }
 
+    /**
+     * 찜 이벤트 상태 변경 알림 발송 (크롤러에서 호출)
+     */
+    @PostMapping("/event-status-change")
+    public ResponseEntity<Map<String, Object>> notifyEventStatusChange(
+            @RequestBody EventStatusChangeRequest request
+    ) {
+        log.info("찜 이벤트 상태 변경 알림 요청: 이벤트={}, 새상태={}",
+                request.eventTitle(), request.newStatus());
+
+        int sentCount = eventNotificationService.notifyEventSubscribers(
+                request.eventId(),
+                request.eventTitle(),
+                request.newStatus()
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "sentCount", sentCount
+        ));
+    }
+
     record EventUpdateRequest(
             String theaterId,
             String theaterName,
@@ -69,6 +91,12 @@ public class NotificationController {
     record StatusChangeRequest(
             String theaterId,
             String theaterName,
+            String eventTitle,
+            String newStatus
+    ) {}
+
+    record EventStatusChangeRequest(
+            String eventId,
             String eventTitle,
             String newStatus
     ) {}

@@ -33,6 +33,9 @@ public class Member {
     @Column(nullable = false)
     private String role = "USER";
 
+    @Column(name = "notification_enabled", nullable = false)
+    private boolean notificationEnabled = true;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -47,5 +50,9 @@ public class Member {
 
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
+    }
+
+    public void updateNotificationEnabled(boolean enabled) {
+        this.notificationEnabled = enabled;
     }
 }
